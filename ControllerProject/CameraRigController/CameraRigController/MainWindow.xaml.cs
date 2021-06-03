@@ -74,6 +74,25 @@ namespace CameraRigController
 
         }
 
+        private void CloseFile(string path)
+        {
+            if (_openFiles.Exists((file) => file.File.FullName == path))
+            {
+                var file = _openFiles.Find((f) => f.File.FullName == path);
+                _openFiles.Remove(file);
+                FileNameLabel.Content = "Filename:";
+                ChannelNumberLabel.Content = "Number of channels:";
+                FPSLabel.Content = "FPS:";
+
+                foreach (var tab in _tabs)
+                {
+                    tab.ChannelComboBox.Items.Clear();
+                    tab.ChannelComboBox.Items.Add(new ComboBoxItem() { Content = "None" });
+                    tab.ChannelComboBox.SelectedIndex = 0;
+                }
+            }
+        }
+
         /// <summary>
         /// File->Open
         /// </summary>
@@ -91,6 +110,10 @@ namespace CameraRigController
             var res = f.ShowDialog();
             if (res.HasValue && res.Value)
             {
+                if (_openFiles.Count > 0)
+                {
+                    CloseFile(_openFiles.Last().File.FullName);
+                }
                 if (_openFiles.Exists((file) => file.File.FullName == f.FileName))
                 {
                     MessageBox.Show("File already open!", "Already open", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -102,15 +125,18 @@ namespace CameraRigController
                 FileNameLabel.Content = $"Filename: {fi.Name}";
                 manager.ProcessFile();
                 ChannelNumberLabel.Content = $"Number of channels: {manager.AnimFileInfo.ChannelCount}";
-
+                FPSLabel.Content = $"FPS: {manager.AnimFileInfo.FPS}";
+                int tabID = 0;
                 foreach (var tab in _tabs)
                 {
+                    tabID++;
                     tab.ChannelComboBox.Items.Clear();
                     tab.ChannelComboBox.Items.Add(new ComboBoxItem() { Content = "None" });
                     for (int i = 0; i < manager.AnimFileInfo.ChannelCount; i++)
                     {
                         tab.ChannelComboBox.Items.Add(new ComboBoxItem() { Content = i.ToString() });
                     }
+                    tab.ChannelComboBox.SelectedIndex = tabID < tab.ChannelComboBox.Items.Count ? tabID : 0;
                 }
             }
         }

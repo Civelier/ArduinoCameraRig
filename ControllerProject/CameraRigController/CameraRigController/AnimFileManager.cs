@@ -18,8 +18,10 @@ namespace CameraRigController
         public void ProcessFile()
         {
             var rawChannels = new List<RawAnimChannel>();
+            double fps;
             using (var reader = File.OpenText())
             {
+                fps = double.Parse(reader.ReadLine());
                 RawAnimChannel channel = null;
                 while (!reader.EndOfStream)
                 {
@@ -37,7 +39,7 @@ namespace CameraRigController
                     }
                 }
             }
-            AnimFileInfo = new AnimFileInfo(File, rawChannels);
+            AnimFileInfo = new AnimFileInfo(File, rawChannels, fps);
         }
     }
 }

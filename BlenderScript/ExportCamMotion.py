@@ -11,6 +11,7 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProp
 from bpy.types import Operator
 
 def get_cam_keyframes(act, stream):
+    stream.write(str(bpy.context.scene.render.fps / bpy.context.scene.render.fps_base) + "\n")
     a = bpy.data.actions[act]
     a.fcurves.update()
     i = 0
@@ -89,4 +90,4 @@ if __name__ == "__main__":
     register()
 
     # test call
-    #bpy.ops.export_test.some_data('INVOKE_DEFAULT')
+    bpy.ops.export_test.some_data('INVOKE_DEFAULT')

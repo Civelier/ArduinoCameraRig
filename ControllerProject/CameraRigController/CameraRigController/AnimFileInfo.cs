@@ -15,12 +15,12 @@ namespace CameraRigController
         public IReadOnlyList<RawAnimChannel> Channels { get; }
         public double FPS { get; }
 
-        public AnimFileInfo(FileInfo file, List<RawAnimChannel> channels)
+        public AnimFileInfo(FileInfo file, List<RawAnimChannel> channels, double fps)
         {
             File = file;
             Channels = channels;
             FrameCount = 0;
-            FPS = 30;
+            FPS = fps;
         }
     }
 }

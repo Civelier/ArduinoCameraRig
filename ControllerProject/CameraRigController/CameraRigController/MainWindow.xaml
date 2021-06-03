@@ -24,11 +24,12 @@
             </MenuItem>
         </Menu>
         <Canvas x:Name="MainCanvas" HorizontalAlignment="Left" Height="396" Margin="0,23,0,0" VerticalAlignment="Top" Width="792" Grid.ColumnSpan="2">
-            <Frame x:Name="ChannelFrame" Height="246" Width="792" Canvas.Top="106"/>
-            <GroupBox Header="Animation file" Height="91" Canvas.Left="10" Canvas.Top="10" Width="331">
-                <Canvas Margin="0,0,-2,-6">
+            <Frame x:Name="ChannelFrame" Height="236" Width="792" Canvas.Top="116"/>
+            <GroupBox Header="Animation file" Height="101" Canvas.Left="10" Canvas.Top="10" Width="331">
+                <Canvas Margin="0,0,-2,-4">
                     <Label x:Name="FileNameLabel" Content="Filename:" Width="321"/>
                     <Label x:Name="ChannelNumberLabel" Content="Number of channels: " Height="26" Canvas.Top="26" Width="321"/>
+                    <Label x:Name="FPSLabel" Content="FPS:" Canvas.Top="52"/>
                 </Canvas>
             </GroupBox>
         </Canvas>
