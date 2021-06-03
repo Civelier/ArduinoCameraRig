@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{9f69f5ea-0b9f-48a0-82ec-e6ed05a28302}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="$(MSBuildThisFileDirectory)readme.txt" />
+    <Text Include="$(MSBuildThisFileDirectory)library.properties" />
+    <Text Include="$(MSBuildThisFileDirectory)src\MultiStepper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- <ClInclude Include="$(MSBuildThisFileDirectory)MultiStepper.h" /> -->
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\IDriverInstruction.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\Keyframe.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\KeyframeInstruction.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\MultiStepperUtillities.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\StepLinearDriverInstruction.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\StepperDriver.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\TimeSync.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\KeyframeInstruction.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\MultiStepper.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\StepLinearDriverInstruction.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\TimeSync.cpp" />
+  </ItemGroup>
+</Project>

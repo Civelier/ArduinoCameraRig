@@ -1,0 +1,36 @@
+﻿<Window x:Class="CameraRigController.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CameraRigController"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800" Closed="Window_Closed">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="277*"/>
+            <ColumnDefinition Width="119*"/>
+        </Grid.ColumnDefinitions>
+        <Menu HorizontalAlignment="Left" Height="18" VerticalAlignment="Top" Width="792" Grid.ColumnSpan="2">
+            <MenuItem Header="File">
+                <MenuItem Header="Open" Click="MenuItem_Click_2"/>
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="Preferences" Click="MenuItem_Click_1"/>
+            </MenuItem>
+            <MenuItem x:Name="ConnectionMenuItem" Header="Connection" GotFocus="MenuItem_GotFocus_1">
+                <MenuItem Header="Play" Click="MenuItem_Click"/>
+                <MenuItem x:Name="PortMenuItem" Header="Port" ItemsSource="{Binding Mode=OneWay}"/>
+            </MenuItem>
+        </Menu>
+        <Canvas x:Name="MainCanvas" HorizontalAlignment="Left" Height="396" Margin="0,23,0,0" VerticalAlignment="Top" Width="792" Grid.ColumnSpan="2">
+            <Frame x:Name="ChannelFrame" Height="246" Width="792" Canvas.Top="106"/>
+            <GroupBox Header="Animation file" Height="91" Canvas.Left="10" Canvas.Top="10" Width="331">
+                <Canvas Margin="0,0,-2,-6">
+                    <Label x:Name="FileNameLabel" Content="Filename:" Width="321"/>
+                    <Label x:Name="ChannelNumberLabel" Content="Number of channels: " Height="26" Canvas.Top="26" Width="321"/>
+                </Canvas>
+            </GroupBox>
+        </Canvas>
+    </Grid>
+</Window>
