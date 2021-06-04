@@ -160,7 +160,7 @@ namespace CameraRigController
         private void Radio_Checked(object sender, RoutedEventArgs e)
         {
             var radio = (RadioButton)sender;
-            _connectionManager.Port.PortName = radio.Content.ToString();
+            _connectionManager.ComPort = radio.Content.ToString();
         }
 
         private void Window_Closed(object sender, EventArgs e)

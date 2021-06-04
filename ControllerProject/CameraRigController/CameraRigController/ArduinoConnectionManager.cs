@@ -16,7 +16,16 @@ namespace CameraRigController
     {
         ArduinoRecievePacket _lastPacket;
         private bool _newPacket;
-        public SerialPort Port { get; }
+        public string ComPort 
+        {
+            get => _comPort;
+            set
+            {
+                _comPort = value;
+                Port.Dispose();
+            }
+        }
+        public SerialPort Port { get; private set; }
         Thread _arduinoPlay;
         private List<AnimChannel> _data;
         Dispatcher Dispatcher;
@@ -24,13 +33,11 @@ namespace CameraRigController
         private bool _run;
         private bool _running;
         private StringBuilder _buffer = new StringBuilder();
+        private string _comPort;
+
         public ArduinoConnectionManager()
         {
-            Port = new SerialPort();
-            Port.BaudRate = 115200;
-            Port.DtrEnable = true;
-            Port.RtsEnable = true;
-            Port.DataReceived += Port_DataReceived;
+            OpenPort();
             _arduinoPlay = new Thread(PlayRoutine);
         }
 
@@ -123,7 +130,7 @@ namespace CameraRigController
 
         public bool ResetArduino()
         {
-            if (Port.IsOpen) Port.Close();
+            if (Port.IsOpen) Port.Dispose();
             return TryConnect();
         }
 
@@ -135,6 +142,24 @@ namespace CameraRigController
             //    return;
             //}
             //SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
+        }
+
+        private void OpenPort()
+        {
+            Port = new SerialPort();
+            if (!string.IsNullOrEmpty(ComPort)) Port.PortName = ComPort;
+            Port.BaudRate = 115200;
+            Port.DtrEnable = true;
+            Port.RtsEnable = true;
+            Port.DataReceived += Port_DataReceived;
+            Port.Disposed += Port_Disposed;
+        }
+
+        private void Port_Disposed(object sender, EventArgs e)
+        {
+            Port.DataReceived -= Port_DataReceived;
+            Port.Disposed -= Port_Disposed;
+            OpenPort();
         }
 
         public ArduinoStatusCode SendStatusRequest()
@@ -230,6 +255,18 @@ namespace CameraRigController
                     }
                 }
                 Thread.Sleep(1000);
+                if (Port.IsOpen)
+                {
+                    Port.Dispose();
+                    //while (!_abort)
+                    //{
+                    //    if (_newPacket)
+                    //    {
+                    //        if (_lastPacket.Status == ArduinoStatusCode.Done) break;
+                    //    }
+                    //}
+                    //Debug.WriteLine("Playback done");
+                }
             }
         }
 

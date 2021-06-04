@@ -147,11 +147,12 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 	{
 		Running = false;
 		status = StatusCode::STReady;
-		Serial.println(status);
+		Serial.println(STDone);
 		Serial.println(StatusCode::STDebug);
 		Serial.println("Done");
 		Buffer.ResetRead();
 		sync->Stop();
+		//Motor1->SetInstruction(nullptr);
 		return;
 	}
 	if (channelID == 0 && result == DriverInstructionResult::Done)
