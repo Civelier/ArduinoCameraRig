@@ -15,6 +15,7 @@ private:
     Keyframe m_start;
     Keyframe m_end;
     TimeSync* m_sync;
+    bool m_firstRun;
 private:
     int8_t Repeat(int8_t step, int8_t length);
 public:

@@ -16,18 +16,24 @@ KeyframeDriverInstruction::KeyframeDriverInstruction(TimeSync* sync, Keyframe st
     this->dir = stps > 0;
 	this->steps = this->dir ? stps : -2 * stps;
     //DebugValue(steps);
-    /*Serial.print("Stps:");
+    /*Serial.println(4);
+    Serial.print("Stps:");
     Serial.println(stps);
+    Serial.println(4);
     Serial.print("Steps:");
     Serial.println(steps);
+    Serial.println(4);
     Serial.print("Dir:");
-    Serial.println(dir);
+    Serial.println(dir);*/
+    /*Serial.println(4);
     Serial.print("ms / 1000:");
     Serial.println(ms / 1000.0f);*/
 
-    //Serial.println((1000000.0f / ((float)steps * (ms / 1000.0f))));
+    /*Serial.println(4);
+    Serial.println((1000000.0f / ((float)steps * (ms / 1000.0f))));*/
     if (steps != 0) pulseDelay = (uint32_t)(ms / (float)steps * 1000.0f);
     this->nextPulse = m_start.MS * 1000L + pulseDelay;
+    m_firstRun = true;
 }
 
 DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver)
@@ -36,7 +42,24 @@ DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver
 
     /*Serial.print("New instruction: delay: ");
     Serial.println(pulseDelay);*/
-    if (!m_sync->Started) m_sync->Start();
+    if (!m_sync->Started)
+    {
+        m_sync->Start();
+        /*Serial.println(4);
+        Serial.print("Sync time: ");
+        Serial.print(m_sync->CurrentMicros());
+        Serial.println("us");*/
+    }
+    /*if (m_firstRun)
+    {
+        Serial.println(4);
+        Serial.print("PulseDelay: ");
+        Serial.println(pulseDelay);
+        Serial.println(4);
+        Serial.print("Steps: ");
+        Serial.println(steps);
+        m_firstRun = false;
+    }*/
     uint32_t now = m_sync->CurrentMicros();
     // move only if the appropriate delay has passed:
     if (steps > 0 && now >= nextPulse)
@@ -164,6 +187,9 @@ DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver
         //thisStep = (thisStep + 1) % 10;
         steps--;
     }
-    if (m_end.MS * 1000L <= now) return DriverInstructionResult::Done;
+    if (m_end.MS * 1000L <= now)
+    {
+        return DriverInstructionResult::Done;
+    }
     return DriverInstructionResult::Success;
 }

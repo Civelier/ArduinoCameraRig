@@ -19,6 +19,8 @@
                 <MenuItem Header="Preferences" Click="MenuItem_Click_1"/>
             </MenuItem>
             <MenuItem x:Name="ConnectionMenuItem" Header="Connection" GotFocus="MenuItem_GotFocus_1">
+                <MenuItem Header="Load" Click="MenuItem_Click_4"/>
+                <MenuItem Header="Initialize motors" Click="MenuItem_Click_3"/>
                 <MenuItem Header="Play" Click="MenuItem_Click"/>
                 <MenuItem x:Name="PortMenuItem" Header="Port" ItemsSource="{Binding Mode=OneWay}"/>
             </MenuItem>

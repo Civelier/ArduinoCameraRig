@@ -21,12 +21,21 @@ namespace CameraRigController
 
     public readonly struct ArduinoSendRequestPacket
     {
+        /// <summary>
+        /// Request a status update of the arduino
+        /// </summary>
         public static readonly ArduinoSendRequestPacket StatusRequest = new ArduinoSendRequestPacket(1);
+        /// <summary>
+        /// Reserved for further use
+        /// </summary>
         public static readonly ArduinoSendRequestPacket ErrorClearRequest = new ArduinoSendRequestPacket(2);
-        public static ArduinoSendRequestPacket MotorResetRequest(double[] initialStates)
-        {
-            return new ArduinoSendRequestPacket(3, initialStates.Cast<string>());
-        }
+        /// <summary>
+        /// Request the arduino to set the position of the motors to the starting point
+        /// </summary>
+        public static readonly ArduinoSendRequestPacket MotorResetRequest = new ArduinoSendRequestPacket(3);
+        /// <summary>
+        /// Request to start playback of the animation
+        /// </summary>
         public static readonly ArduinoSendRequestPacket StartRequest = new ArduinoSendRequestPacket(4);
 
         public readonly UInt16 Command;
@@ -64,6 +73,12 @@ namespace CameraRigController
         public readonly UInt32 MS;
         public readonly Int32 Steps;
 
+        /// <summary>
+        /// Generates a packet containing a keyframe for the arduino
+        /// </summary>
+        /// <param name="motorChannel">Channel of the motor</param>
+        /// <param name="ms">Time of keyframe</param>
+        /// <param name="steps">Absolute position in steps</param>
         public ArduinoSendKeyframePacket(UInt16 motorChannel, UInt32 ms, Int32 steps)
         {
             Command = 7;

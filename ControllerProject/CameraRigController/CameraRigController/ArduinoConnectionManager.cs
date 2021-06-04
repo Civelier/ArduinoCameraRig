@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
@@ -58,16 +59,36 @@ namespace CameraRigController
                 }
                 catch (UnauthorizedAccessException e)
                 {
-                    MessageBox.Show(e.Message); 
+                    _run = false;
+                    MessageBox.Show(e.Message);
                     return false;
                 }
                 catch (InvalidOperationException e)
                 {
+                    _run = false;
                     MessageBox.Show(e.Message);
+                    return false;
+                }
+                catch (IOException e)
+                {
+                    _run = false;
+                    MessageBox.Show("Invalid port. Please select a valid port.\n" + e.Message);
                     return false;
                 }
             }
             return true;
+        }
+
+        public void Load(List<AnimChannel> channels)
+        {
+            _data = channels;
+            if (!_arduinoPlay.IsAlive)
+            {
+                _arduinoPlay.Start();
+            }
+            _run = false;
+            while (_running) Thread.Sleep(50);
+            _run = true;
         }
 
         public bool TryConnect()
@@ -106,16 +127,14 @@ namespace CameraRigController
             return TryConnect();
         }
 
-        public void Play(List<AnimChannel> data)
+        public void Play()
         {
-            _data = data;
-            if (!_arduinoPlay.IsAlive)
+            if (_data == null)
             {
-                _arduinoPlay.Start();
+                MessageBox.Show("The data needs to be loaded before playing.");
+                return;
             }
-            _run = false;
-            while (_running) Thread.Sleep(50);
-            _run = true;
+            SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
         }
 
         public ArduinoStatusCode SendStatusRequest()
@@ -186,7 +205,8 @@ namespace CameraRigController
                             {
                                 if (!_run) break;
                                 if (_abort) return;
-                                SendKeyframeData(keyframe, channel.ChannelID);
+                                SendKeyframeData(keyframe, channel.MotorInfo.MotorID);
+                                Thread.Sleep(10);
                             }
                             if (!_run) break;
                             if (_abort) return;
@@ -198,15 +218,13 @@ namespace CameraRigController
                         //if (status == ArduinoStatusCode.Ready)
                         //{
                         //FlushBuffer();
-                        SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
-                        FlushBuffer();
                         //}
                         //while (status != ArduinoStatusCode.Done && !_abort)
                         //{
                         //    Thread.Sleep(1000);
                         //    status = SendStatusRequest();
                         //}
-                        Debug.WriteLine("Replay complete");
+                        Debug.WriteLine("Upload complete");
                         _run = false;
                     }
                 }

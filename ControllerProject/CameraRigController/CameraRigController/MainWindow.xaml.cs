@@ -27,6 +27,7 @@ namespace CameraRigController
         private string[] _lastPorts = null;
         private ArduinoConnectionManager _connectionManager = new ArduinoConnectionManager();
         private List<ChannelTab> _tabs = new List<ChannelTab>();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -42,26 +43,7 @@ namespace CameraRigController
         /// <param name="e"></param>
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
-            var file = _openFiles.LastOrDefault();
-            if (file == null)
-            {
-                MessageBox.Show("No open file. Open a file to play the animation: File->Open");
-                return;
-            }
-            List<AnimChannel> animChannels = new List<AnimChannel>();
-            foreach (var tab in _tabs)
-            {
-                if (tab.ChannelComboBox.SelectedIndex < 1)
-                {
-                    MessageBox.Show("Select an animation channel!");
-                    return;
-                }
-                int index = tab.ChannelComboBox.SelectedIndex;
-                animChannels.Add(ComputeChannel(file.AnimFileInfo.Channels[index - 1],
-                    tab.MotorInfo, file.AnimFileInfo));
-            }
-
-            _connectionManager.Play(animChannels);
+            _connectionManager.Play();
         }
 
         /// <summary>
@@ -182,6 +164,44 @@ namespace CameraRigController
         private void Window_Closed(object sender, EventArgs e)
         {
             _connectionManager.Dispose();
+        }
+
+        /// <summary>
+        /// Connection->Initialize motors
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MenuItem_Click_3(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        /// Connection->Load
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MenuItem_Click_4(object sender, RoutedEventArgs e)
+        {
+            var file = _openFiles.LastOrDefault();
+            if (file == null)
+            {
+                MessageBox.Show("No open file. Open a file to play the animation: File->Open");
+                return;
+            }
+            List<AnimChannel> animChannels = new List<AnimChannel>();
+            foreach (var tab in _tabs)
+            {
+                if (tab.ChannelComboBox.SelectedIndex < 1)
+                {
+                    MessageBox.Show("Select an animation channel!");
+                    return;
+                }
+                int index = tab.ChannelComboBox.SelectedIndex;
+                animChannels.Add(ComputeChannel(file.AnimFileInfo.Channels[index - 1],
+                    tab.MotorInfo, file.AnimFileInfo));
+            }
+            _connectionManager.Load(animChannels);
         }
     }
 }

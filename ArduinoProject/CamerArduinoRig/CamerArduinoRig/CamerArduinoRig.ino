@@ -9,6 +9,8 @@
 #include "Keyframe.h"
 #include "KeyframeInstruction.h"
 
+#define CHANNEL_COUNT 1
+
 StepperDriver* Motor1 = new StepperDriver(200, 2, 3, 4, 5, 6);
 
 enum StatusCode
@@ -20,6 +22,58 @@ enum StatusCode
 	STReadyForInstruction = 5,
 	STError = 0b10000000,
 	STError1 = StatusCode::STError | 1,
+};
+
+struct KeyframeBuffer
+{
+	Keyframe* buffer;
+	size_t Count;
+	size_t Index;
+	size_t ReadIndex;
+	size_t Size;
+	KeyframeBuffer(size_t size)
+	{
+		Size = size;
+		buffer = (Keyframe*)malloc(size * sizeof(Keyframe));
+	}
+
+	void ResetRead()
+	{
+		Index = 0;
+	}
+
+	void Write(Keyframe kf)
+	{
+		buffer[Index] = kf;
+		//kf.Print();
+		Count++;
+		Index++;
+	}
+
+	int Available()
+	{
+		return Count - Index;
+	}
+
+	void Clear()
+	{
+		Count = 0;
+		ReadIndex = 0;
+		Index = 0;
+	}
+
+	Keyframe Read()
+	{
+		Keyframe kf = buffer[ReadIndex];
+		//kf.Print();
+		ReadIndex++;
+		return kf;
+	}
+
+	~KeyframeBuffer()
+	{
+		free(buffer);
+	}
 };
 
 struct CircularBuffer
@@ -63,12 +117,17 @@ struct CircularBuffer
 		ReadIndex = (ReadIndex + 1) % Size;
 		return kf;
 	}
+
+	~CircularBuffer()
+	{
+		free(buffer);
+	}
 };
 
 #define DebugValue(value) Serial.println(StatusCode::STDebug); Serial.print(#value); Serial.print(" = "); Serial.println(value)
 
 StatusCode status = StatusCode::STReady;
-CircularBuffer Buffer = CircularBuffer(10);
+KeyframeBuffer Buffer = KeyframeBuffer(10);
 Keyframe last;
 TimeSync* sync = new TimeSync();
 bool Running;
@@ -83,9 +142,16 @@ void ComputeInstruction(Keyframe start, Keyframe end)
 
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 {
+	if (!sync->Started) return;
 	if (!Buffer.Available())
 	{
 		Running = false;
+		status = StatusCode::STReady;
+		Serial.println(status);
+		Serial.println(StatusCode::STDebug);
+		Serial.println("Done");
+		Buffer.ResetRead();
+		sync->Stop();
 		return;
 	}
 	if (channelID == 0 && result == DriverInstructionResult::Done)
@@ -119,7 +185,11 @@ void ReadSerial()
 		break;
 	case 3: // Motor reset packet
 	{
-
+		int steps[CHANNEL_COUNT];
+		for (size_t i = 0; i < CHANNEL_COUNT; i++)
+		{
+			steps[i] = Serial.parseInt();
+		}
 	}
 	break;
 	case 4: // Start packet
@@ -128,9 +198,8 @@ void ReadSerial()
 		auto end = Buffer.Read();
 		last = end;
 		status = StatusCode::STRunning;
-		ComputeInstruction(start, end);
-		status = StatusCode::STReady;
 		Running = true;
+		ComputeInstruction(start, end);
 	}
 	break;
 	case 5:

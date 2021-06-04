@@ -11,10 +11,19 @@ namespace CameraRigController
     [Serializable]
     public class MotorInfo
     {
+        [ReadOnly(true)]
+        [Description("The ID of the motor channel.")]
+        [DisplayName("Motor channel ID")]
+        public UInt16 MotorID { get; set; }
+
+        [DisplayName("Name")]
+        [Description("The name of the motor channel.")]
+        [DefaultValue("Motor")]
         public string Name { get; set; }
 
         [Description("The number of steps the motor has per revolution.")]
         [DisplayName("Steps per revolutions")]
+        [DefaultValue(1000)]
         public UInt16 StepsPerRevolution { get; set; }
         //[DisplayName("Samples per second")]
         //[Description("Number of instruction per second.")]
