@@ -32,6 +32,8 @@ namespace CameraRigController
         {
             InitializeComponent();
             var tab = new ChannelTab();
+            tab.MotorInfo.MotorID = 0;
+            tab.MotorInfo.Name = $"Motor {tab.MotorInfo.MotorID}";
             _tabs.Add(tab);
             ChannelFrame.Content = tab;
         }

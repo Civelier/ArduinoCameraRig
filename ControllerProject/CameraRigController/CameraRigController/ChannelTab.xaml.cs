@@ -21,11 +21,12 @@ namespace CameraRigController
     /// </summary>
     public partial class ChannelTab : Page
     {
-        public MotorInfo MotorInfo = new MotorInfo();
+        public MotorInfo MotorInfo;
         public PropertyGrid Grid;
         public ChannelTab()
         {
             InitializeComponent();
+            MotorInfo = new MotorInfo() { StepsPerRevolution = 1000 };
             Grid = (PropertyGrid)FormsHost.Child;
             Grid.SelectedObject = MotorInfo;
         }

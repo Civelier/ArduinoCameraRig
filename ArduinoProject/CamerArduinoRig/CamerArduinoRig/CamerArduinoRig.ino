@@ -143,7 +143,7 @@ void ComputeInstruction(Keyframe start, Keyframe end)
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 {
 	if (!sync->Started) return;
-	if (!Buffer.Available())
+	if (!Buffer.Available() && Running)
 	{
 		Running = false;
 		status = StatusCode::STReady;

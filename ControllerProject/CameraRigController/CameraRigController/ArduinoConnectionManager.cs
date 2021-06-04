@@ -129,12 +129,12 @@ namespace CameraRigController
 
         public void Play()
         {
-            if (_data == null)
-            {
-                MessageBox.Show("The data needs to be loaded before playing.");
-                return;
-            }
-            SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
+            //if (_data == null)
+            //{
+            //    MessageBox.Show("The data needs to be loaded before playing.");
+            //    return;
+            //}
+            //SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
         }
 
         public ArduinoStatusCode SendStatusRequest()
@@ -219,6 +219,7 @@ namespace CameraRigController
                         //{
                         //FlushBuffer();
                         //}
+                        SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
                         //while (status != ArduinoStatusCode.Done && !_abort)
                         //{
                         //    Thread.Sleep(1000);
