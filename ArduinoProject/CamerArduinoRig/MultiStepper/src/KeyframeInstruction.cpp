@@ -221,9 +221,9 @@ DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver
     uint32_t now = m_sync->CurrentMicros();
 	if (stepsLeft > 0)
 	{
-        float startMS = now < m_start.MS ? 0 : (float)(now - m_start.MS);
+        float startUS = now < m_start.MS * 1000.0f ? 0 : (float)(now - m_start.MS * 1000.0f);
 
-		int32_t step = steps * m_curve(startMS / (float)((m_end.MS - m_start.MS) * 1000.0f));
+		int32_t step = steps * m_curve(startUS / (float)((m_end.MS - m_start.MS) * 1000.0f));
         int32_t deltaStep = step - lastStep;
 		if (step > (steps - stepsLeft))
 		{
@@ -233,7 +233,7 @@ DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver
             DBGValue(startMS / (float)((m_end.MS - m_start.MS) * 1000.0f));
             DBGValue(step);*/
 			m_buffer.Write(now);
-			float sps = (1.0f / m_buffer.AverageSpeed()) * 1000000.0f * (float)deltaStep;
+            float sps = (1.0f / m_buffer.AverageSpeed()) * 1000000.0f;// *(float)deltaStep;
             //DBGValue(sps);
 			MicroStep ms = driver->LogDistribution.MicroStepForSpeed(sps);
             //DBGValue(ms);
