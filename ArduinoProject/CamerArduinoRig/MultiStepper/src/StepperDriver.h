@@ -8,6 +8,7 @@
 #endif
 
 #include "MultiStepperUtillities.h"
+#include "LogarithmicStepDistribution.h"
 
 class IDriverInstruction;
 
@@ -20,6 +21,7 @@ struct StepperDriver
 	pin_t MS1 = NOT_A_PIN;
 	pin_t MS2 = NOT_A_PIN;
 	pin_t MS3 = NOT_A_PIN;
+	LogarithmicStepDistribution LogDistribution;
 	StepType StepCompatibility;
 	IDriverInstruction* Instruction;
 	int8_t thisStep;
@@ -49,12 +51,25 @@ struct StepperDriver
 		MS2 = ms2;
 		MS3 = ms3;
 		StepCompatibility = StepType::Sixteenth;
+		LogDistribution.MaxStepPerSec = 800;
+		LogDistribution.StepScaling = 1050;
+		LogDistribution.Factor = 4.5f;
+		LogDistribution.Base = 1.07f;
+
+		LogDistribution.ComputeValues();
 	}
 
 	void SetInstruction(IDriverInstruction* instruction)
 	{
 		if (Instruction != nullptr) delete(Instruction);
 		Instruction = instruction;
+	}
+	
+	void SetMicroStepPins(MicroStep ms)
+	{
+		digitalWrite(MS1, bitRead(ms, MS1_BIT));
+		digitalWrite(MS2, bitRead(ms, MS2_BIT));
+		digitalWrite(MS3, bitRead(ms, MS3_BIT));
 	}
 };
 

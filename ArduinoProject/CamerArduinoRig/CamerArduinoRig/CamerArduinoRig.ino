@@ -11,7 +11,7 @@
 
 #define CHANNEL_COUNT 1
 
-StepperDriver* Motor1 = new StepperDriver(200, 2, 3, 4, 5, 6);
+StepperDriver* Motor1 = new StepperDriver(200, 3, 2, 4, 5, 6);
 
 enum StatusCode
 {
@@ -39,7 +39,7 @@ struct KeyframeBuffer
 
 	void ResetRead()
 	{
-		Index = 0;
+		ReadIndex = 0;
 	}
 
 	void Write(Keyframe kf)
@@ -52,7 +52,12 @@ struct KeyframeBuffer
 
 	int Available()
 	{
-		return Count - Index;
+		return Index - ReadIndex;
+	}
+
+	int AvailableForWrite()
+	{
+		return Size - Index;
 	}
 
 	void Clear()
@@ -127,7 +132,7 @@ struct CircularBuffer
 #define DebugValue(value) Serial.println(StatusCode::STDebug); Serial.print(#value); Serial.print(" = "); Serial.println(value)
 
 StatusCode status = StatusCode::STReady;
-KeyframeBuffer Buffer = KeyframeBuffer(10);
+CircularBuffer Buffer = CircularBuffer(10);
 Keyframe last;
 TimeSync* sync = new TimeSync();
 bool Running;
@@ -136,21 +141,22 @@ void ComputeInstruction(Keyframe start, Keyframe end)
 {
 	if (start.ChannelID == 0)
 	{
-		Motor1->SetInstruction(new KeyframeDriverInstruction(sync, start, end));
+		Motor1->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &LinearCurve));
 	}
 }
 
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 {
 	if (!sync->Started) return;
-	if (!Buffer.Available() && Running)
+	//if (result == DriverInstructionResult::Done) DBGValue(Buffer.Available());
+	if (!Buffer.Available() && Running && result == DriverInstructionResult::Done)
 	{
 		Running = false;
 		status = StatusCode::STReady;
 		Serial.println(STDone);
 		Serial.println(StatusCode::STDebug);
 		Serial.println("Done");
-		Buffer.ResetRead();
+		Buffer.Clear();
 		sync->Stop();
 		//Motor1->SetInstruction(nullptr);
 		return;
@@ -172,6 +178,8 @@ void setup()
 	MStep.AttachCallback(&InstructionCallback);
 	Serial.println(status);
 }
+
+
 
 void ReadSerial()
 {

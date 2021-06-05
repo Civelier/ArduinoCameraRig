@@ -9,6 +9,7 @@
 
 //#define MSTEP_DEBUG
 
+#define DBGValue(value) Serial.print(#value); Serial.print(": "); Serial.println(value)
 
 #ifdef MSTEP_DEBUG
 

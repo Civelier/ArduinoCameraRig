@@ -20,10 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <!-- <ClInclude Include="$(MSBuildThisFileDirectory)MultiStepper.h" /> -->
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\Curves.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\IDriverInstruction.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Keyframe.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\KeyframeInstruction.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\LogarithmicStepDistribution.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\MultiStepperUtillities.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\SpeedBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\StepLinearDriverInstruction.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\StepperDriver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\TimeSync.h" />
@@ -31,6 +34,7 @@
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\KeyframeInstruction.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\MultiStepper.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\Curves.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\StepLinearDriverInstruction.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\TimeSync.cpp" />
   </ItemGroup>
