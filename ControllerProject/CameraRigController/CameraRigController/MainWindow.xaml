@@ -1,11 +1,11 @@
-﻿<Window x:Class="CameraRigController.MainWindow"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CameraRigController"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" Closed="Window_Closed">
+        xmlns:View="clr-namespace:CameraRigController.View" x:Class="CameraRigController.MainWindow"
+        mc:Ignorable="d" Height="450" Width="800" Closed="Window_Closed" DataContext="{Binding NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True, Source={StaticResource Locator}}" Title="{Binding Main.Title}">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="277*"/>
@@ -13,7 +13,7 @@
         </Grid.ColumnDefinitions>
         <Menu HorizontalAlignment="Left" Height="18" VerticalAlignment="Top" Width="792" Grid.ColumnSpan="2">
             <MenuItem Header="File">
-                <MenuItem Header="Open" Click="MenuItem_Click_2"/>
+                <MenuItem Header="Open" DataContext="{Binding Mode=OneWay}" Command="{Binding Main.OpenFileCommand}"/>
             </MenuItem>
             <MenuItem Header="Edit">
                 <MenuItem Header="Preferences" Click="MenuItem_Click_1"/>
@@ -27,11 +27,12 @@
             <Frame x:Name="ChannelFrame" Height="236" Width="792" Canvas.Top="116"/>
             <GroupBox Header="Animation file" Height="101" Canvas.Left="10" Canvas.Top="10" Width="331">
                 <Canvas Margin="0,0,-2,-4">
-                    <Label x:Name="FileNameLabel" Content="Filename:" Width="321"/>
-                    <Label x:Name="ChannelNumberLabel" Content="Number of channels: " Height="26" Canvas.Top="26" Width="321"/>
-                    <Label x:Name="FPSLabel" Content="FPS:" Canvas.Top="52"/>
+                    <Label x:Name="FileNameLabel" Content="{Binding Main.Filename, Mode=OneWay}" Width="321" DataContext="{Binding Mode=OneWay}"/>
+                    <Label x:Name="ChannelNumberLabel" Content="{Binding Main.NumberOfChannels, Mode=OneWay}" Height="26" Canvas.Top="26" Width="321"/>
+                    <Label x:Name="FPSLabel" Content="{Binding Main.FPS, Mode=OneWay}" Canvas.Top="52"/>
                 </Canvas>
             </GroupBox>
+            <View:MotorTab Height="95" Canvas.Left="360" Canvas.Top="16" Width="358"/>
         </Canvas>
     </Grid>
 </Window>

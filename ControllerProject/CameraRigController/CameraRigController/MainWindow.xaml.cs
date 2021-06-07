@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using CameraRigController.ViewModel;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,15 +28,23 @@ namespace CameraRigController
         private string[] _lastPorts = null;
         private ArduinoConnectionManager _connectionManager = new ArduinoConnectionManager();
         private List<ChannelTab> _tabs = new List<ChannelTab>();
+        private readonly MainViewModel _modelView;
 
         public MainWindow()
         {
             InitializeComponent();
+            _modelView = CommonServiceLocator.ServiceLocator.Current.GetInstance<MainViewModel>();
+            _modelView.PropertyChanged += _modelView_PropertyChanged;
             var tab = new ChannelTab();
             tab.MotorInfo.MotorID = 0;
             tab.MotorInfo.Name = $"Motor {tab.MotorInfo.MotorID}";
             _tabs.Add(tab);
             ChannelFrame.Content = tab;
+        }
+
+        private void _modelView_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            
         }
 
         /// <summary>
@@ -64,9 +73,9 @@ namespace CameraRigController
             {
                 var file = _openFiles.Find((f) => f.File.FullName == path);
                 _openFiles.Remove(file);
-                FileNameLabel.Content = "Filename:";
-                ChannelNumberLabel.Content = "Number of channels:";
-                FPSLabel.Content = "FPS:";
+                //FileNameLabel.Content = "Filename:";
+                //ChannelNumberLabel.Content = "Number of channels:";
+                //FPSLabel.Content = "FPS:";
 
                 foreach (var tab in _tabs)
                 {
@@ -104,19 +113,19 @@ namespace CameraRigController
                     return;
                 }
                 var fi = new FileInfo(f.FileName);
-                var manager = new AnimFileManager(fi);
+                var manager = _modelView.FileManager = new AnimFileManager(fi);
                 _openFiles.Add(manager);
-                FileNameLabel.Content = $"Filename: {fi.Name}";
+                //FileNameLabel.Content = $"Filename: {fi.Name}";
                 manager.ProcessFile();
-                ChannelNumberLabel.Content = $"Number of channels: {manager.AnimFileInfo.ChannelCount}";
-                FPSLabel.Content = $"FPS: {manager.AnimFileInfo.FPS}";
+                //ChannelNumberLabel.Content = $"Number of channels: {manager.AnimFileInfo.Value.ChannelCount}";
+                //FPSLabel.Content = $"FPS: {manager.AnimFileInfo.Value.FPS}";
                 int tabID = 0;
                 foreach (var tab in _tabs)
                 {
                     tabID++;
                     tab.ChannelComboBox.Items.Clear();
                     tab.ChannelComboBox.Items.Add(new ComboBoxItem() { Content = "None" });
-                    for (int i = 0; i < manager.AnimFileInfo.ChannelCount; i++)
+                    for (int i = 0; i < manager.AnimFileInfo.Value.ChannelCount; i++)
                     {
                         tab.ChannelComboBox.Items.Add(new ComboBoxItem() { Content = i.ToString() });
                     }
@@ -200,8 +209,8 @@ namespace CameraRigController
                     return;
                 }
                 int index = tab.ChannelComboBox.SelectedIndex;
-                animChannels.Add(ComputeChannel(file.AnimFileInfo.Channels[index - 1],
-                    tab.MotorInfo, file.AnimFileInfo));
+                animChannels.Add(ComputeChannel(file.AnimFileInfo.Value.Channels[index - 1],
+                    tab.MotorInfo, file.AnimFileInfo.Value));
             }
             _connectionManager.Load(animChannels);
         }

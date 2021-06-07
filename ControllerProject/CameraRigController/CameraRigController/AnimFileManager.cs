@@ -10,7 +10,7 @@ namespace CameraRigController
     public class AnimFileManager
     {
         public readonly FileInfo File;
-        public AnimFileInfo AnimFileInfo { get; private set; }
+        public AnimFileInfo? AnimFileInfo { get; private set; }
         public AnimFileManager(FileInfo file)
         {
             File = file;
