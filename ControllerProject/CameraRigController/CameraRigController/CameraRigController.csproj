@@ -65,13 +65,20 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="FieldGrid\Editor\FieldGridTemplateSelector.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\EditorViewModelBase.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\StringEditorVM.cs" />
+    <Compile Include="FieldGrid\FieldGridControl.xaml.cs">
+      <DependentUpon>FieldGridControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="FieldGrid\FieldGridVM.cs" />
+    <Compile Include="Model\MotorTabModel.cs" />
     <Compile Include="RawAnimChannel.cs" />
     <Compile Include="RawKeyframe.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
@@ -87,6 +94,10 @@
     <Page Include="ChannelTab.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="FieldGrid\FieldGridControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -142,18 +153,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Model\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\WPF-PropertyGrid-Control\Main\WpfPropertyGrid.Themes\WpfPropertyGrid.Themes.csproj">
-      <Project>{dd5c7e14-01cc-44fc-81bc-5c6cf6bb2ad9}</Project>
-      <Name>WpfPropertyGrid.Themes</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\WPF-PropertyGrid-Control\Main\WpfPropertyGrid\WpfPropertyGrid.csproj">
-      <Project>{5a48b67f-1e7e-4ed6-a201-f6cc8e7e6788}</Project>
-      <Name>WpfPropertyGrid</Name>
-    </ProjectReference>
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

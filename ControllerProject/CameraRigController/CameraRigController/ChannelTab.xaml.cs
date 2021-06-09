@@ -27,8 +27,6 @@ namespace CameraRigController
         {
             InitializeComponent();
             MotorInfo = new MotorInfo() { StepsPerRevolution = 1000 };
-            Grid = (PropertyGrid)FormsHost.Child;
-            Grid.SelectedObject = MotorInfo;
         }
     }
 }

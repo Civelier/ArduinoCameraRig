@@ -26,12 +26,6 @@
                     </ComboBox>
                 </Canvas>
             </GroupBox>
-            <WindowsFormsHost x:Name="FormsHost" Margin="445,10,10,10">
-                <WindowsFormsHost.DataContext>
-                    <local:MotorInfo/>
-                </WindowsFormsHost.DataContext>
-                <Forms:PropertyGrid/>
-            </WindowsFormsHost>
         </Grid>
 
     </Grid>

@@ -12,9 +12,13 @@
   See http://www.galasoft.ch/mvvm
 */
 
+using CameraRigController.FieldGrid;
+using CameraRigController.FieldGrid.Editor.ViewModel;
 using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace CameraRigController.ViewModel
 {
@@ -43,7 +47,8 @@ namespace CameraRigController.ViewModel
             ////}
 
             SimpleIoc.Default.Register<MainViewModel>();
-            SimpleIoc.Default.Register<MotorTabVM>();
+            SimpleIoc.Default.Register<MotorTabsVM>();
+            SimpleIoc.Default.Register<FieldGridVM>();
         }
 
         public MainViewModel Main
@@ -54,13 +59,22 @@ namespace CameraRigController.ViewModel
             }
         }
 
-        public MotorTabVM MotorTab
+        public MotorTabsVM MotorTabs
         {
             get
             {
-                return ServiceLocator.Current.GetInstance<MotorTabVM>();
+                return ServiceLocator.Current.GetInstance<MotorTabsVM>();
             }
         }
+
+        public FieldGridVM FieldGrid1
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<FieldGridVM>();
+            }
+        }
+
 
         public static void Cleanup()
         {

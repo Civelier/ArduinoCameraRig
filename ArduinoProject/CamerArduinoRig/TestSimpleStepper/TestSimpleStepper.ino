@@ -361,7 +361,7 @@ void ReadSerial()
 	{
 		int32_t steps = Serial.parseInt();
 		uint32_t timeMS = Serial.parseFloat();
-		StepWithAccellerationCurve(&ExponentialInOutCurve, steps, timeMS);
+		StepWithAccellerationCurve(&SinInOutCurve, steps, timeMS);
 		Serial.println("Done");
 	}
 		break;

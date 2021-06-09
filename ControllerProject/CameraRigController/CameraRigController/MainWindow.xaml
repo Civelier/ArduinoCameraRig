@@ -4,14 +4,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CameraRigController"
-        xmlns:View="clr-namespace:CameraRigController.View" x:Class="CameraRigController.MainWindow"
-        mc:Ignorable="d" Height="450" Width="800" Closed="Window_Closed" DataContext="{Binding NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True, Source={StaticResource Locator}}" Title="{Binding Main.Title}">
+        xmlns:View="clr-namespace:CameraRigController.View" xmlns:fieldgrid="clr-namespace:CameraRigController.FieldGrid" x:Class="CameraRigController.MainWindow"
+        mc:Ignorable="d" Height="466" Width="793" Closed="Window_Closed" DataContext="{Binding NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True, Source={StaticResource Locator}}" Title="{Binding Main.Title}" Initialized="Window_Initialized">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="277*"/>
-            <ColumnDefinition Width="119*"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Menu HorizontalAlignment="Left" Height="18" VerticalAlignment="Top" Width="792" Grid.ColumnSpan="2">
+        <Menu HorizontalAlignment="Left" Height="18" VerticalAlignment="Top" Width="792">
             <MenuItem Header="File">
                 <MenuItem Header="Open" DataContext="{Binding Mode=OneWay}" Command="{Binding Main.OpenFileCommand}"/>
             </MenuItem>
@@ -23,16 +22,44 @@
                 <MenuItem x:Name="PortMenuItem" Header="Port" ItemsSource="{Binding Mode=OneWay}"/>
             </MenuItem>
         </Menu>
-        <Canvas x:Name="MainCanvas" HorizontalAlignment="Left" Height="396" Margin="0,23,0,0" VerticalAlignment="Top" Width="792" Grid.ColumnSpan="2">
-            <Frame x:Name="ChannelFrame" Height="236" Width="792" Canvas.Top="116"/>
-            <GroupBox Header="Animation file" Height="101" Canvas.Left="10" Canvas.Top="10" Width="331">
+        <Grid x:Name="MainCanvas" Margin="0,23,0,0" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform/>
+                    <RotateTransform Angle="-0.281"/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </Grid.RenderTransform>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="106"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="276"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Frame x:Name="ChannelFrame" Visibility="Hidden" Grid.ColumnSpan="2" Margin="0,38,0,80" Grid.Row="1"/>
+            <GroupBox Header="Animation file" Margin="10,10,7,0">
                 <Canvas Margin="0,0,-2,-4">
                     <Label x:Name="FileNameLabel" Content="{Binding Main.Filename, Mode=OneWay}" Width="321" DataContext="{Binding Mode=OneWay}"/>
                     <Label x:Name="ChannelNumberLabel" Content="{Binding Main.NumberOfChannels, Mode=OneWay}" Height="26" Canvas.Top="26" Width="321"/>
                     <Label x:Name="FPSLabel" Content="{Binding Main.FPS, Mode=OneWay}" Canvas.Top="52"/>
                 </Canvas>
             </GroupBox>
-            <View:MotorTab Height="95" Canvas.Left="360" Canvas.Top="16" Width="358"/>
-        </Canvas>
+            <fieldgrid:FieldGridControl Margin="10,6,10,111" Grid.ColumnSpan="2" Grid.Row="1"/>
+            <!--<TabControl x:Name="TabCTL" Height="203" Canvas.Top="127" Width="792" ItemsSource="{Binding MotorTabs.Tabs}" Initialized="TabCTL_Initialized">
+                <TabControl.ItemTemplate>
+                    <DataTemplate DataType="ViewModel:MotorTabVM">
+                        <TextBlock Text="{Binding Data.MotorChannelName}"/>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <DataTemplate DataType="ViewModel:MotorTabVM">
+                        <View:MotorTab Data="{Binding Data.MotorChannelName}"/>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>-->
+        </Grid>
     </Grid>
 </Window>

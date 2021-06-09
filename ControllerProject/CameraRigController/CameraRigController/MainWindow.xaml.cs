@@ -1,4 +1,5 @@
-﻿using CameraRigController.ViewModel;
+﻿using CameraRigController.View;
+using CameraRigController.ViewModel;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -35,6 +36,8 @@ namespace CameraRigController
             InitializeComponent();
             _modelView = CommonServiceLocator.ServiceLocator.Current.GetInstance<MainViewModel>();
             _modelView.PropertyChanged += _modelView_PropertyChanged;
+
+
             var tab = new ChannelTab();
             tab.MotorInfo.MotorID = 0;
             tab.MotorInfo.Name = $"Motor {tab.MotorInfo.MotorID}";
@@ -214,5 +217,29 @@ namespace CameraRigController
             }
             _connectionManager.Load(animChannels);
         }
+
+        private void Window_Initialized(object sender, EventArgs e)
+        {
+
+        }
+
+        private void TabCTL_Initialized(object sender, EventArgs e)
+        {
+            //InitializeTabs();
+        }
+        //private void InitializeTabs()
+        //{
+        //    var tabs = CommonServiceLocator.ServiceLocator.Current.GetInstance<MotorTabsVM>();
+        //    var gen = TabCTL.ItemContainerGenerator;
+        //    for (int i = 0; i < tabs.Tabs.Count; i++)
+        //    {
+        //        var tabItem = (TabItem)gen.ContainerFromIndex(i);
+        //        if (tabItem != null)
+        //        {
+        //            var tabView = (MotorTab)tabItem?.Content;
+        //            tabView.PropertyGrid.SelectedObject = tabs.Tabs[i].Data;
+        //        }
+        //    }
+        //}
     }
 }
