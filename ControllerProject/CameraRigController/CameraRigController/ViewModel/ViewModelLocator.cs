@@ -14,6 +14,7 @@
 
 using CameraRigController.FieldGrid;
 using CameraRigController.FieldGrid.Editor.ViewModel;
+using CameraRigController.Model;
 using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
@@ -48,7 +49,8 @@ namespace CameraRigController.ViewModel
 
             SimpleIoc.Default.Register<MainViewModel>();
             SimpleIoc.Default.Register<MotorTabsVM>();
-            SimpleIoc.Default.Register<FieldGridVM>();
+            SimpleIoc.Default.Register<MotorTabModel>();
+            SimpleIoc.Default.Register<FieldGridVM>(() => new FieldGridVM() { Target = Motor1 });
         }
 
         public MainViewModel Main
@@ -72,6 +74,14 @@ namespace CameraRigController.ViewModel
             get
             {
                 return ServiceLocator.Current.GetInstance<FieldGridVM>();
+            }
+        }
+
+        public MotorTabModel Motor1
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<MotorTabModel>();
             }
         }
 

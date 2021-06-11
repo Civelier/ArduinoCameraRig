@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:CameraRigController.FieldGrid" xmlns:editor="clr-namespace:CameraRigController.FieldGrid.Editor" xmlns:vm="clr-namespace:CameraRigController.FieldGrid.Editor.ViewModel"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" DataContext="{StaticResource Locator}">
+             d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <DataTemplate x:Key="StringTemplate" DataType="vm:StringEditorVM">
             <Grid>
@@ -13,14 +13,42 @@
                     <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="0"/>
                 </Grid.ColumnDefinitions>
-                <Label Content="{Binding DisplayName}" Grid.Column="0"/>
+                <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
                 <TextBox Text="{Binding Value}" Grid.Column="2"/>
             </Grid>
         </DataTemplate>
+        <DataTemplate x:Key="ReadonlyStringTemplate" DataType="vm:StringEditorVM">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="0"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
+                <TextBlock Text="{Binding Value}" Grid.Column="2"/>
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
-    <Grid>
-        <ListBox ItemsSource="{Binding FieldGrid1.Fields}" ItemTemplateSelector="{StaticResource FieldTemplateSelector}">
+    <Grid Grid.IsSharedSizeScope="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="7"/>
+                <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Name" Grid.Column="1"/>
+            <TextBlock Text="Value" Grid.Column="3"/>
+        </Grid>
+        <ListBox x:Name="PropertyListBox" ItemTemplateSelector="{StaticResource FieldTemplateSelector}"
+                 Grid.Row="1">
         </ListBox>
     </Grid>
 </UserControl>

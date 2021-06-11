@@ -1,8 +1,10 @@
 ﻿using CameraRigController.FieldGrid.Editor;
+using CameraRigController.FieldGrid.Editor.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,28 +19,43 @@ using System.Windows.Shapes;
 
 namespace CameraRigController.FieldGrid
 {
+
+
+
+
+
+
     /// <summary>
     /// Interaction logic for FieldGridControl.xaml
     /// </summary>
     public partial class FieldGridControl : UserControl
     {
-
-
-        public ObservableCollection<FieldGridTemplateSelector> Fields
+        public ObservableCollection<EditorViewModelBase> Fields
         {
-            get { return (ObservableCollection<FieldGridTemplateSelector>)GetValue(FieldsProperty); }
+            get { return (ObservableCollection<EditorViewModelBase>)GetValue(FieldsProperty); }
             set { SetValue(FieldsProperty, value); }
         }
 
-        // Using a DependencyProperty as the backing store for Fields.  This enables animation, styling, binding, etc...
+        // Using a DependencyProperty as the backing store for editorViewModelBases.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty FieldsProperty =
-            DependencyProperty.Register("Fields", typeof(ObservableCollection<FieldGridTemplateSelector>), typeof(FieldGridControl), new PropertyMetadata(null));
-
+            DependencyProperty.Register("Fields",
+                typeof(ObservableCollection<EditorViewModelBase>), 
+                typeof(FieldGridControl),
+                new PropertyMetadata(new ObservableCollection<EditorViewModelBase>(), FieldsChangedCallback));
 
         public FieldGridControl()
         {
             Resources["FieldTemplateSelector"] = new FieldGridTemplateSelector(this);
             InitializeComponent();
+        }
+
+        static void FieldsChangedCallback(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+        {
+            if (args.NewValue != null)
+            {
+                var fg = sender as FieldGridControl;
+                fg.PropertyListBox.ItemsSource = fg.Fields;
+            }
         }
     }
 }

@@ -47,7 +47,7 @@
                     <Label x:Name="FPSLabel" Content="{Binding Main.FPS, Mode=OneWay}" Canvas.Top="52"/>
                 </Canvas>
             </GroupBox>
-            <fieldgrid:FieldGridControl Margin="10,6,10,111" Grid.ColumnSpan="2" Grid.Row="1"/>
+            <fieldgrid:FieldGridControl Fields="{Binding FieldGrid1.Fields}" Margin="10,6,10,111" Grid.ColumnSpan="2" Grid.Row="1"/>
             <!--<TabControl x:Name="TabCTL" Height="203" Canvas.Top="127" Width="792" ItemsSource="{Binding MotorTabs.Tabs}" Initialized="TabCTL_Initialized">
                 <TabControl.ItemTemplate>
                     <DataTemplate DataType="ViewModel:MotorTabVM">

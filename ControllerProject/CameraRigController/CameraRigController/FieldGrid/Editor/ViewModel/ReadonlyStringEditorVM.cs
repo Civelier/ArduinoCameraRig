@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,8 +8,8 @@ using System.Windows;
 
 namespace CameraRigController.FieldGrid.Editor.ViewModel
 {
-    [FieldGridEditor(typeof(string), "StringTemplate")]
-    public class StringEditorVM : EditorViewModelBase
+    [FieldGridEditor(typeof(string), "ReadonlyStringTemplate", typeof(ReadOnlyAttribute))]
+    public class ReadonlyStringEditorVM : EditorViewModelBase
     {
         public override string DisplayName
         {
@@ -19,16 +20,16 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
         // Using a DependencyProperty as the backing store for DisplayName.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty DisplayNameProperty =
             DependencyProperty.Register("DisplayName", typeof(string), 
-                typeof(StringEditorVM), 
-                new PropertyMetadata("String display name"));
-
+                typeof(ReadonlyStringEditorVM), 
+                new PropertyMetadata("Readonly string display name"));
+        
         public string Value
         {
             get => (string)ObjectValue;
             set => ObjectValue = value;
         }
 
-        public override object ObjectValue 
+        public override object ObjectValue
         {
             get { return GetValue(ObjectValueProperty); }
             set { SetValue(ObjectValueProperty, value); }
@@ -36,7 +37,8 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
 
         // Using a DependencyProperty as the backing store for Value.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty ObjectValueProperty =
-            DependencyProperty.Register("ObjectValue", typeof(object), typeof(StringEditorVM), 
+            DependencyProperty.Register("ObjectValue", typeof(object), 
+                typeof(ReadonlyStringEditorVM), 
                 new PropertyMetadata("Sample text", OnObjectValueChanged));
     }
 }

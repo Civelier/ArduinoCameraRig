@@ -11,6 +11,16 @@ namespace CameraRigController.FieldGrid
 {
     public class FieldGridVM : DependencyObject
     {
+        public object Target
+        {
+            get { return (object)GetValue(TargetProperty); }
+            set { SetValue(TargetProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for Target.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty TargetProperty =
+            DependencyProperty.Register("Target", typeof(object), typeof(FieldGridVM), new PropertyMetadata(null, TargetChangedCallback));
+
 
 
         public ObservableCollection<EditorViewModelBase> Fields
@@ -25,8 +35,11 @@ namespace CameraRigController.FieldGrid
 
         public FieldGridVM()
         {
-            Fields = new ObservableCollection<EditorViewModelBase>();
-            Fields.Add(new StringEditorVM() { DisplayName = "String1", Value = "Hello world" });
+        }
+
+        static void TargetChangedCallback(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+        {
+            if (args.NewValue != null) sender.SetValue(FieldsProperty, FieldGridUtillities.ToVMCollection(args.NewValue));
         }
     }
 }

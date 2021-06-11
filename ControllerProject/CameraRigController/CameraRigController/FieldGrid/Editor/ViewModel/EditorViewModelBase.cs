@@ -11,11 +11,7 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
     public abstract class EditorViewModelBase : DependencyObject, INotifyPropertyChanged
     {
         public string PropertyName { get; set; }
-        public abstract string DisplayName
-        {
-            get;
-            set;
-        }
+        public abstract string DisplayName { get; set; }
         public abstract object ObjectValue { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -23,6 +19,12 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected static void OnObjectValueChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+        {
+            var obj = sender as EditorViewModelBase;
+            obj.OnPropertyChanged(nameof(ObjectValue));
         }
     }
 }

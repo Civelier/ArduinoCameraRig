@@ -38,6 +38,7 @@ namespace CameraRigController.FieldGrid
                 if (att != null)
                 {
                     _supportedTypes.Add(new FieldGridSupportedTypeInfo(att.EditedObjectType, type, att.AttributeTypes));
+                    Editor.FieldGridTemplateSelector.RegisterEditorResource(type, att.Provider);
                 }
             }
         }
@@ -74,11 +75,11 @@ namespace CameraRigController.FieldGrid
                 if (IsSupported(p.PropertyType))
                 {
                     var typeInfo = GetSupportedTypeInfo(p);
-                    var editor = (EditorViewModelBase)typeInfo.EditorType.GetConstructor(new Type[] { }).Invoke(new object[] { });
+                    var editor = (EditorViewModelBase)Activator.CreateInstance(typeInfo.EditorType);
                     editor.PropertyName = p.Name;
                     editor.PropertyChanged += (sender, args) =>
                     {
-                        if (args.PropertyName == "ObjectValue" && !p.GetValue(obj).Equals(editor.ObjectValue)) p.SetValue(obj, editor.ObjectValue);
+                        if (args.PropertyName == "ObjectValue" && !(p.GetValue(obj)?.Equals(editor.ObjectValue) ?? false)) p.SetValue(obj, editor.ObjectValue);
                     };
                     editor.ObjectValue = p.GetValue(obj);
                     editor.DisplayName = p.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? NicifyName(p.Name);
@@ -91,9 +92,16 @@ namespace CameraRigController.FieldGrid
             return collection;
         }
 
+        private static IEnumerable<FieldGridSupportedTypeInfo> GetAllSupportedTypeInfos(PropertyInfo memberInfo)
+        {
+            return _supportedTypes.FindAll((x) => x.ObjectType == memberInfo.PropertyType);
+        }
+
         private static FieldGridSupportedTypeInfo GetSupportedTypeInfo(PropertyInfo memberInfo)
         {
-            return _supportedTypes.Find((x) =>
+            var infos = GetAllSupportedTypeInfos(memberInfo).ToList();
+            infos.Sort(new Comparison<FieldGridSupportedTypeInfo>((x, y) => y.AttributeTypes.Length.CompareTo(x.AttributeTypes.Length)));
+            return infos.FirstOrDefault((x) =>
             {
                 var atts = memberInfo.GetCustomAttributes();
                 foreach (var att in x.AttributeTypes)

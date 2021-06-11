@@ -4,6 +4,7 @@ using FluentAssertions;
 using CameraRigController.FieldGrid;
 using System.ComponentModel;
 using System.Linq;
+using CameraRigController.FieldGrid.Editor.ViewModel;
 
 namespace ControllerInterfaceTests
 {
@@ -56,6 +57,18 @@ namespace ControllerInterfaceTests
                 }
             }
 
+            private string _value2;
+            [ReadOnly(true)]
+            public string Value2
+            {
+                get { return _value2; }
+                set 
+                { 
+                    _value2 = value;
+                    OnPropertyChanged(nameof(Value2));
+                }
+            }
+
 
             public event PropertyChangedEventHandler PropertyChanged;
 
@@ -67,16 +80,17 @@ namespace ControllerInterfaceTests
         }
 
         [TestMethod]
-        public void TestDataConversion()
+        public void TestStringDataConversion()
         {
             var obj = new DemoObject1() { Value1 = "Hello" };
 
             var collection = FieldGridUtillities.ToVMCollection(obj);
             collection[0].DisplayName.Should().Be("Value 1");
+            collection[0].Should().BeOfType(typeof(StringEditorVM));
         }
 
         [TestMethod]
-        public void TestDataBinding()
+        public void TestStringDataBinding()
         {
             var obj = new DemoObject1() { Value1 = "Test1" };
 
@@ -90,6 +104,21 @@ namespace ControllerInterfaceTests
 
             obj.Value1 = "Test3";
             value1.ObjectValue.Should().Be("Test3");
+        }
+
+        [TestMethod]
+        public void TestReadonlyStringDataConversion()
+        {
+            var obj = new DemoObject1() { Value2 = "Hello" };
+
+            var collection = FieldGridUtillities.ToVMCollection(obj);
+            var value2 = collection.First((p) => p.PropertyName == "Value2");
+
+            value2.Should().BeOfType<ReadonlyStringEditorVM>();
+            value2.ObjectValue.Should().Be("Hello");
+
+            obj.Value2 = "World";
+            value2.ObjectValue.Should().Be("World");
         }
     }
 }

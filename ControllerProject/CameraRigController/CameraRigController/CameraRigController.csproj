@@ -75,6 +75,7 @@
     <Compile Include="FieldGrid\Editor\FieldGridTemplateSelector.cs" />
     <Compile Include="FieldGrid\Editor\StringEditorSelector.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\EditorViewModelBase.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\ReadonlyStringEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\StringEditorVM.cs" />
     <Compile Include="FieldGrid\Exceptions\UnsupportedTypeException.cs" />
     <Compile Include="FieldGrid\FieldGridControl.xaml.cs">
