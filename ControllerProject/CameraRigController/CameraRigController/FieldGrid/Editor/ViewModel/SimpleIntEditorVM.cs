@@ -7,9 +7,9 @@ using System.Windows;
 
 namespace CameraRigController.FieldGrid.Editor.ViewModel
 {
-    [FieldGridEditor(typeof(string))]
+    [FieldGridEditor(typeof(int))]
     [FieldgridTemplate("StringTemplate")]
-    public class StringEditorVM : EditorViewModelBase
+    public class SimpleIntEditorVM : EditorViewModelBase
     {
         public override string DisplayName
         {
@@ -19,17 +19,32 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
 
         // Using a DependencyProperty as the backing store for DisplayName.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty DisplayNameProperty =
-            DependencyProperty.Register("DisplayName", typeof(string), 
-                typeof(StringEditorVM), 
+            DependencyProperty.Register("DisplayName", typeof(string),
+                typeof(SimpleIntEditorVM),
                 new PropertyMetadata("String display name"));
 
         public string Value
         {
-            get => (string)ObjectValue;
-            set => ObjectValue = value;
+            get => (string)GetValue(ValueProperty);
+            set => SetValue(ValueProperty, value);
         }
 
-        public override object ObjectValue 
+        // Using a DependencyProperty as the backing store for Value.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ValueProperty =
+            DependencyProperty.Register("Value", typeof(object), typeof(SimpleIntEditorVM),
+                new PropertyMetadata("0", OnValueChanged));
+
+        static void OnValueChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+        {
+            var obj = sender as SimpleIntEditorVM;
+            if (int.TryParse((string)args.NewValue, out int result))
+            {
+                obj.ObjectValue = result;
+            }
+            else obj.Value = (string)args.OldValue;
+        }
+
+        public override object ObjectValue
         {
             get { return GetValue(ObjectValueProperty); }
             set { SetValue(ObjectValueProperty, value); }
@@ -37,7 +52,7 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
 
         // Using a DependencyProperty as the backing store for Value.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty ObjectValueProperty =
-            DependencyProperty.Register("ObjectValue", typeof(object), typeof(StringEditorVM), 
+            DependencyProperty.Register("ObjectValue", typeof(object), typeof(SimpleIntEditorVM),
                 new PropertyMetadata("Sample text", OnObjectValueChanged));
     }
 }

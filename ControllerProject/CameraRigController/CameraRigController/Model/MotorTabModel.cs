@@ -36,6 +36,19 @@ namespace CameraRigController.Model
             }
         }
 
+        private int _itg1;
+        [DisplayName("Number")]
+        public int Itg1
+        {
+            get => _itg1;
+            set
+            {
+                _itg1 = value;
+                OnPropertyChanged(nameof(Itg1));
+            }
+        }
+
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public MotorTabModel()

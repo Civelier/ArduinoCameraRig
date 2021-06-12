@@ -7,20 +7,16 @@ using System.Threading.Tasks;
 
 namespace CameraRigController.FieldGrid
 {
-    [System.AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = true)]
+    [System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     sealed class FieldGridEditorAttribute : Attribute
     {
-        public FieldGridEditorAttribute(Type editedObjectType, IDataTemplateProvider provider, params Type[] attributeTypes)
+        public FieldGridEditorAttribute(Type editedObjectType, params Type[] attributeTypes)
         {
             EditedObjectType = editedObjectType;
-            Provider = provider;
             AttributeTypes = attributeTypes;
         }
-        public FieldGridEditorAttribute(Type editedObjectType, string templateResourceName, params Type[] attributeTypes) :
-            this(editedObjectType, new StringDataTemplateProvider(templateResourceName), attributeTypes) { }
 
         public Type EditedObjectType { get; }
         public Type[] AttributeTypes { get; }
-        public IDataTemplateProvider Provider { get; }
     }
 }

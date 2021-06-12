@@ -16,7 +16,7 @@
                     <ColumnDefinition Width="0"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
-                <TextBox Text="{Binding Value}" Grid.Column="2"/>
+                <TextBox Text="{Binding ObjectValue}" Grid.Column="2"/>
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="ReadonlyStringTemplate" DataType="vm:StringEditorVM">
@@ -28,7 +28,19 @@
                     <ColumnDefinition Width="0"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
-                <TextBlock Text="{Binding Value}" Grid.Column="2"/>
+                <TextBlock Text="{Binding ObjectValue}" Grid.Column="2"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="SimpleIntTemplate" DataType="vm:SimpleIntEditorVM">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="0"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
+                <TextBox Text="{Binding Value, Mode=TwoWay}" Grid.Column="2"/>
             </Grid>
         </DataTemplate>
     </UserControl.Resources>

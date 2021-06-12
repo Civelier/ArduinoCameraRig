@@ -71,17 +71,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="FieldGrid\Editor\EditorSelectorBase.cs" />
+    <Compile Include="FieldGrid\Editor\Any.cs" />
     <Compile Include="FieldGrid\Editor\FieldGridTemplateSelector.cs" />
-    <Compile Include="FieldGrid\Editor\StringEditorSelector.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\EditorViewModelBase.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\ReadonlyStringEditorVM.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\SimpleIntEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\StringEditorVM.cs" />
-    <Compile Include="FieldGrid\Exceptions\UnsupportedTypeException.cs" />
     <Compile Include="FieldGrid\FieldGridControl.xaml.cs">
       <DependentUpon>FieldGridControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="FieldGrid\FieldGridEditorAttribute.cs" />
+    <Compile Include="FieldGrid\FieldGridTemplateAttribute.cs" />
     <Compile Include="FieldGrid\FieldGridUtillities.cs" />
     <Compile Include="FieldGrid\FieldGridVM.cs" />
     <Compile Include="FieldGrid\SliderAttribute.cs" />

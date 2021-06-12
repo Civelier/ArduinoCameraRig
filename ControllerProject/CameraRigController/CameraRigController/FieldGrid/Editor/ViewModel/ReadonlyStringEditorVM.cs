@@ -8,7 +8,9 @@ using System.Windows;
 
 namespace CameraRigController.FieldGrid.Editor.ViewModel
 {
-    [FieldGridEditor(typeof(string), "ReadonlyStringTemplate", typeof(ReadOnlyAttribute))]
+    //[FieldGridEditor(typeof(int), typeof(ReadOnlyAttribute))]
+    [FieldGridEditor(typeof(object), typeof(ReadOnlyAttribute))]
+    [FieldgridTemplate("ReadonlyStringTemplate")]
     public class ReadonlyStringEditorVM : EditorViewModelBase
     {
         public override string DisplayName
@@ -25,8 +27,7 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
         
         public string Value
         {
-            get => (string)ObjectValue;
-            set => ObjectValue = value;
+            get => ObjectValue.ToString();
         }
 
         public override object ObjectValue

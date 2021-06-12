@@ -34,11 +34,15 @@ namespace CameraRigController.FieldGrid
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types)
             {
-                var att = type.GetCustomAttribute<FieldGridEditorAttribute>();
-                if (att != null)
+                var atts = type.GetCustomAttributes<FieldGridEditorAttribute>();
+                var template = type.GetCustomAttribute<FieldgridTemplateAttribute>();
+                if (template != null)
                 {
-                    _supportedTypes.Add(new FieldGridSupportedTypeInfo(att.EditedObjectType, type, att.AttributeTypes));
-                    Editor.FieldGridTemplateSelector.RegisterEditorResource(type, att.Provider);
+                    Editor.FieldGridTemplateSelector.RegisterEditorResource(type, template.Provider);
+                    foreach (var att in atts)
+                    {
+                        _supportedTypes.Add(new FieldGridSupportedTypeInfo(att.EditedObjectType, type, att.AttributeTypes));
+                    }
                 }
             }
         }
@@ -72,9 +76,10 @@ namespace CameraRigController.FieldGrid
 
             foreach (var p in properties)
             {
-                if (IsSupported(p.PropertyType))
+                var support = IsSupported(p.PropertyType);
+                if (support != SupportInfo.NotSupported)
                 {
-                    var typeInfo = GetSupportedTypeInfo(p);
+                    var typeInfo = GetSupportedTypeInfo(p, support);
                     var editor = (EditorViewModelBase)Activator.CreateInstance(typeInfo.EditorType);
                     editor.PropertyName = p.Name;
                     editor.PropertyChanged += (sender, args) =>
@@ -92,15 +97,42 @@ namespace CameraRigController.FieldGrid
             return collection;
         }
 
-        private static IEnumerable<FieldGridSupportedTypeInfo> GetAllSupportedTypeInfos(PropertyInfo memberInfo)
+        private static IEnumerable<FieldGridSupportedTypeInfo> GetAllSupportedTypeInfos(PropertyInfo memberInfo, SupportInfo support)
         {
-            return _supportedTypes.FindAll((x) => x.ObjectType == memberInfo.PropertyType);
+            var result = new List<FieldGridSupportedTypeInfo>();
+            if ((support & SupportInfo.ConcretelySupported) == SupportInfo.ConcretelySupported)
+            {
+                result.AddRange(_supportedTypes.FindAll((x) => x.ObjectType == memberInfo.PropertyType));
+            }
+            if ((support & SupportInfo.SubclassOfSupported) == SupportInfo.SubclassOfSupported)
+            {
+                result.AddRange(_supportedTypes.FindAll(x => x.ObjectType != typeof(object) &&
+                    memberInfo.PropertyType.IsSubclassOf(x.ObjectType)));
+            }
+            if ((support & SupportInfo.ImplicitlySupported) == SupportInfo.ImplicitlySupported)
+            {
+                result.AddRange(_supportedTypes.FindAll(x => x.ObjectType == typeof(object)));
+            }
+            result.Sort((x, y) =>
+            {
+                var lengths = y.AttributeTypes.Length.CompareTo(x.AttributeTypes.Length);
+                var xPriority = x.ObjectType == memberInfo.PropertyType ? 0 :
+                    x.ObjectType != typeof(object) &&
+                        memberInfo.PropertyType.IsSubclassOf(x.ObjectType) ? 1 :
+                    x.ObjectType == typeof(object) ? 2 : 3;
+                var yPriority = y.ObjectType == memberInfo.PropertyType ? 0 :
+                    y.ObjectType != typeof(object) &&
+                        memberInfo.PropertyType.IsSubclassOf(y.ObjectType) ? 1 :
+                    y.ObjectType == typeof(object) ? 2 : 3;
+                return lengths == 0 ? xPriority.CompareTo(yPriority) : lengths;
+            });
+            return result;
         }
 
-        private static FieldGridSupportedTypeInfo GetSupportedTypeInfo(PropertyInfo memberInfo)
+        private static FieldGridSupportedTypeInfo GetSupportedTypeInfo(PropertyInfo memberInfo, SupportInfo support)
         {
-            var infos = GetAllSupportedTypeInfos(memberInfo).ToList();
-            infos.Sort(new Comparison<FieldGridSupportedTypeInfo>((x, y) => y.AttributeTypes.Length.CompareTo(x.AttributeTypes.Length)));
+            var infos = GetAllSupportedTypeInfos(memberInfo, support);
+            
             return infos.FirstOrDefault((x) =>
             {
                 var atts = memberInfo.GetCustomAttributes();
@@ -112,9 +144,37 @@ namespace CameraRigController.FieldGrid
             });
         }
 
-        public static bool IsSupported(Type type)
+        public enum SupportInfo
         {
-            return _supportedTypes.Exists((o) => o.ObjectType == type);
+            /// <summary>
+            /// Not supported
+            /// </summary>
+            NotSupported = 0b000,
+            /// <summary>
+            /// Supported from <see cref="object"/>
+            /// </summary>
+            ImplicitlySupported = 0b001,
+            /// <summary>
+            /// Supported by a concrete type
+            /// </summary>
+            ConcretelySupported = 0b010,
+            /// <summary>
+            /// Subclass a supported type (excluding <see cref="object"/>)
+            /// </summary>
+            SubclassOfSupported = 0b100,
+        }
+
+        public static SupportInfo IsSupported(Type type)
+        {
+            SupportInfo support = _supportedTypes.Exists(o => o.ObjectType == typeof(object))
+                ? SupportInfo.ImplicitlySupported : SupportInfo.NotSupported;
+            support |= _supportedTypes.Exists((o) => o.ObjectType == type) 
+                ? SupportInfo.ConcretelySupported : SupportInfo.NotSupported;
+
+            support |= _supportedTypes.Exists(o => type != typeof(object) && 
+            type.IsSubclassOf(o.ObjectType))
+                ? SupportInfo.SubclassOfSupported : SupportInfo.NotSupported;
+            return support;
         }
 
         public static string NicifyName(string name)
