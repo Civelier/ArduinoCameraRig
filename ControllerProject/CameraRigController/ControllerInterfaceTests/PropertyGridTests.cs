@@ -69,6 +69,18 @@ namespace ControllerInterfaceTests
                 }
             }
 
+            private int _value3;
+
+            public int Value3
+            {
+                get => _value3;
+                set
+                {
+                    _value3 = value;
+                    OnPropertyChanged(nameof(Value3));
+                }
+            }
+
 
             public event PropertyChangedEventHandler PropertyChanged;
 
@@ -119,6 +131,21 @@ namespace ControllerInterfaceTests
 
             obj.Value2 = "World";
             value2.ObjectValue.Should().Be("World");
+        }
+
+        [TestMethod]
+        public void TestSimpleIntEditor()
+        {
+            var obj = new DemoObject1() { Value3 = 3 };
+
+            var collection = FieldGridUtillities.ToVMCollection(obj);
+            var value3 = collection.First((p) => p.PropertyName == "Value3");
+
+            value3.Should().BeOfType<SimpleIntEditorVM>();
+            value3.ObjectValue.Should().Be(3);
+
+            obj.Value3 = 10;
+            value3.ObjectValue.Should().Be(10);
         }
     }
 }
