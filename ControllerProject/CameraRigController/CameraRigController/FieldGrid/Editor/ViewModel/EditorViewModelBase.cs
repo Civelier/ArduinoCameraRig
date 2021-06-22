@@ -14,17 +14,94 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
         public abstract string DisplayName { get; set; }
         public abstract object ObjectValue { get; set; }
 
+        public Type InjectedType { get; set; }
+
+        public IEnumerable<Attribute> PropertyAttributes { get; set; }
+
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public void InitializeViewModel()
+        {
+            DisplayName = GetAttribute<DisplayNameAttribute>()?.DisplayName ?? FieldGridUtillities.NicifyName(PropertyName);
+            AdditionnalInitialization();
+        }
+
+        protected virtual void AdditionnalInitialization()
+        {
+        }
+
+        protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+        {
+            base.OnPropertyChanged(e);
+            OnPropertyChanged(e.Property.Name);
+        }
 
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        protected static void OnObjectValueChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+        public T GetAttribute<T>() where T : Attribute
         {
-            var obj = sender as EditorViewModelBase;
-            obj.OnPropertyChanged(nameof(ObjectValue));
+            var f = PropertyAttributes.FirstOrDefault(a => a.GetType() == typeof(T));
+            if (f == null) return null;
+            return f as T;
+        }
+
+        public T[] GetAttributes<T>() where T : Attribute
+        {
+            var f = PropertyAttributes.Where(a => a.GetType() == typeof(T)).Select(a =>
+                a as T);
+            return f.ToArray();
+        }
+    }
+
+    public abstract class EditorViewModelBase<TEditor> : EditorViewModelBase 
+        where TEditor : EditorViewModelBase<TEditor>
+    {
+        public override string DisplayName
+        {
+            get { return (string)GetValue(DisplayNameProperty); }
+            set { SetValue(DisplayNameProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for DisplayName.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty DisplayNameProperty =
+            DependencyProperty.Register("DisplayName", typeof(string),
+                typeof(TEditor),
+                new PropertyMetadata("Display name"));
+
+        public override object ObjectValue
+        {
+            get { return GetValue(ObjectValueProperty); }
+            set { SetValue(ObjectValueProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for Value.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ObjectValueProperty =
+            DependencyProperty.Register("ObjectValue", typeof(object), typeof(TEditor),
+                new PropertyMetadata("Sample text"));
+    }
+
+    public abstract class EditorViewModelBase<TEditor, TValue> : EditorViewModelBase<TEditor> 
+        where TEditor : EditorViewModelBase<TEditor, TValue>
+    {
+        public virtual TValue Value
+        {
+            get => (TValue)GetValue(ValueProperty);
+            set => SetValue(ValueProperty, value);
+        }
+
+        // Using a DependencyProperty as the backing store for Value.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ValueProperty =
+            DependencyProperty.Register("Value", typeof(TValue), typeof(TEditor),
+                new PropertyMetadata(default(TValue)));
+
+        protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+        {
+            base.OnPropertyChanged(e);
+            if (e.Property.Name == nameof(ObjectValue)) Value = (TValue)e.NewValue;
+            if (e.Property.Name == nameof(Value)) ObjectValue = e.NewValue;
         }
     }
 }

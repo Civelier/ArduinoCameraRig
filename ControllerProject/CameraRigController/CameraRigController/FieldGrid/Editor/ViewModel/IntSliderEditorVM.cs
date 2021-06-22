@@ -7,9 +7,9 @@ using System.Windows;
 
 namespace CameraRigController.FieldGrid.Editor.ViewModel
 {
-    [FieldGridEditor(typeof(string))]
-    [FieldgridTemplate("StringTemplate")]
-    public class StringEditorVM : EditorViewModelBase<StringEditorVM, string>
+    [FieldGridEditor(typeof(int), typeof(SliderAttribute))]
+    [FieldgridTemplate("SliderTemplate")]
+    public class IntSliderEditorVM : SliderNumberEditorVM<IntSliderEditorVM, int>
     {
     }
 }

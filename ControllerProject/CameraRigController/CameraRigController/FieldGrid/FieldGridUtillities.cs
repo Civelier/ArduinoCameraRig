@@ -86,8 +86,10 @@ namespace CameraRigController.FieldGrid
                     {
                         if (args.PropertyName == "ObjectValue" && !(p.GetValue(obj)?.Equals(editor.ObjectValue) ?? false)) p.SetValue(obj, editor.ObjectValue);
                     };
+                    editor.PropertyAttributes = p.GetCustomAttributes();
                     editor.ObjectValue = p.GetValue(obj);
-                    editor.DisplayName = p.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? NicifyName(p.Name);
+                    editor.InjectedType = p.PropertyType;
+                    editor.InitializeViewModel();
                     collection.Add(editor);
                 }
             }

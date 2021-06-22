@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CameraRigController.FieldGrid;
 
 namespace CameraRigController.FieldGrid
 {
@@ -43,10 +44,33 @@ namespace CameraRigController.FieldGrid
                 typeof(FieldGridControl),
                 new PropertyMetadata(new ObservableCollection<EditorViewModelBase>(), FieldsChangedCallback));
 
+
+
+        public object Target
+        {
+            get { return (object)GetValue(TargetProperty); }
+            set { SetValue(TargetProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for Target.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty TargetProperty =
+            DependencyProperty.Register("Target", typeof(object), typeof(FieldGridControl), new PropertyMetadata(null));
+
+
+
         public FieldGridControl()
         {
             Resources["FieldTemplateSelector"] = new FieldGridTemplateSelector(this);
             InitializeComponent();
+        }
+
+        protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+        {
+            base.OnPropertyChanged(e);
+            if (e.Property == TargetProperty)
+            {
+                Fields = FieldGridUtillities.ToVMCollection(Target);
+            }
         }
 
         static void FieldsChangedCallback(DependencyObject sender, DependencyPropertyChangedEventArgs args)

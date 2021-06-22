@@ -13,10 +13,10 @@
                     <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="0"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
-                <TextBox Text="{Binding ObjectValue}" Grid.Column="2"/>
+                <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
+                <TextBox Text="{Binding Value}" Grid.Column="2"/>
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="ReadonlyStringTemplate" DataType="vm:StringEditorVM">
@@ -25,9 +25,9 @@
                     <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="0"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
+                <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
                 <TextBlock Text="{Binding ObjectValue}" Grid.Column="2"/>
             </Grid>
         </DataTemplate>
@@ -37,19 +37,46 @@
                     <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="0"/>
+                </Grid.ColumnDefinitions>
+                <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
+                <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
+                <TextBox Text="{Binding Value}" Grid.Column="2"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="SliderTemplate" DataType="vm:SliderNumberEditorVM" x:Name="Template">
+            <Grid HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition MinWidth="30" Width="auto"/>
+                    <ColumnDefinition Width="*" x:Name="LastColumn"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
-                <TextBox Text="{Binding Value, Mode=TwoWay}" Grid.Column="2"/>
+                <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
+                <TextBlock Text="{Binding Value}" Grid.Column="2"/>
+                <Slider Grid.Column="3" Value="{Binding Value}" Maximum="{Binding Maximum}" Minimum="{Binding Minimum}"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="EnumTemplate" DataType="vm:EnumEditorVM">
+            <Grid HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*" x:Name="LastColumn"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
+                <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
+                <TextBlock Text="{Binding Value}" Grid.Column="2"/>
+                <ComboBox Grid.Column="3" ItemsSource="{Binding Values}"/>
             </Grid>
         </DataTemplate>
     </UserControl.Resources>
-    <Grid Grid.IsSharedSizeScope="True">
+    <Grid Grid.IsSharedSizeScope="True" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid>
+        <Grid HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="7"/>
                 <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
@@ -60,7 +87,7 @@
             <TextBlock Text="Value" Grid.Column="3"/>
         </Grid>
         <ListBox x:Name="PropertyListBox" ItemTemplateSelector="{StaticResource FieldTemplateSelector}"
-                 Grid.Row="1">
+                 Grid.Row="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
         </ListBox>
     </Grid>
 </UserControl>

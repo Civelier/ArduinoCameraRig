@@ -1,7 +1,14 @@
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.IO.Ports;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace CameraRigController.ViewModel
 {
@@ -24,8 +31,13 @@ namespace CameraRigController.ViewModel
         /// </summary>
         public MainViewModel()
         {
+            Tabs = new MotorTabsVM();
             FileManager = null;
             OpenFileCommand = new RelayCommand(OpenFile);
+            PlayCommand = new RelayCommand(Play);
+            RefreshPortsCommand = new RelayCommand(RefreshPorts);
+            CloseCommand = new RelayCommand(Close);
+            _lastPorts = new string[0];
             if (IsInDesignMode)
             {
                 Title = "Hello MVVM Light (Design Mode)";
@@ -36,11 +48,15 @@ namespace CameraRigController.ViewModel
             }
         }
 
+
         public string Title { get; set; }
         private AnimFileManager _fileManager;
         private string _filename;
         private string _numberOfChannels;
         private string _fps;
+        private ArduinoConnectionManager _connectionManager = new ArduinoConnectionManager();
+        private ObservableCollection<RadioButton> _ports = new ObservableCollection<RadioButton>();
+        private IEnumerable<string> _lastPorts;
 
         public AnimFileManager FileManager 
         {
@@ -86,7 +102,101 @@ namespace CameraRigController.ViewModel
             }
         }
 
+        public ObservableCollection<RadioButton> Ports
+        {
+            get => _ports;
+            set
+            {
+                var old = _ports;
+                _ports = value;
+                RaisePropertyChanged(nameof(Ports), old, value, true);
+            }
+        }
+
+        private MotorTabsVM _tabs;
+
+        public MotorTabsVM Tabs
+        {
+            get => _tabs;
+            set
+            {
+                var old = _tabs;
+                _tabs = value;
+                RaisePropertyChanged(nameof(Tabs), old, value, true);
+            }
+        }
+
         public RelayCommand OpenFileCommand { get; set; }
+        public RelayCommand PlayCommand { get; set; }
+        public RelayCommand RefreshPortsCommand { get; set; }
+        public RelayCommand RadioChecked { get; set; }
+        public RelayCommand CloseCommand { get; set; }
+
+
+        void Play()
+        {
+            _connectionManager.Play();
+        }
+
+        void RefreshPorts()
+        {
+            var ports = SerialPort.GetPortNames();
+            if (ports.SequenceEqual(_lastPorts)) return;
+            _lastPorts = ports;
+            int i = 0;
+            while (i < Ports.Count)
+            {
+                var port = Ports[i];
+                if (!ports.Contains((string)port.Content))
+                {
+                    port.Click -= Rdo_Click;
+                    //port.Checked -= Rdo_Checked;
+                    Ports.Remove(port);
+                }
+                else i++;
+            }
+            foreach (var port in ports)
+            {
+                var rdo = new RadioButton() { Content = port };
+                rdo.Click += Rdo_Click;
+                //rdo.Checked += Rdo_Checked;
+                Ports.Add(rdo);
+            }
+        }
+
+        private void Rdo_Checked(object sender, RoutedEventArgs e)
+        {
+            var rdo = (RadioButton)sender;
+            _connectionManager.ComPort = (string)rdo.Content;
+        }
+
+        private void Rdo_Click(object sender, RoutedEventArgs e)
+        {
+            var rdo = (RadioButton)sender;
+            rdo.IsChecked = true;
+        }
+
+        private void Close()
+        {
+            _connectionManager.Dispose();
+        }
+
+        private void CloseFile()
+        {
+        }
+
+        private AnimChannel ComputeChannel(RawAnimChannel rawAnimChannel, MotorInfo motorInfo, AnimFileInfo fileInfo)
+        {
+            var keyframes = new List<Keyframe>();
+
+            foreach (var kf in rawAnimChannel.Keyframes)
+            {
+                UInt32 ms = (UInt32)(kf.Frame / fileInfo.FPS * 1000.0);
+                Int32 value = (Int32)(kf.Value / (2.0 * Math.PI) * motorInfo.StepsPerRevolution * 16.0);
+                keyframes.Add(new Keyframe(ms, value));
+            }
+            return new AnimChannel(keyframes, rawAnimChannel.ChannelID, motorInfo);
+        }
 
         void OpenFile()
         {
@@ -105,8 +215,9 @@ namespace CameraRigController.ViewModel
                 //    return;
                 //}
                 var fi = new FileInfo(openFile.FileName);
-                Set(nameof(FileManager), ref _fileManager, new AnimFileManager(fi), true);
+                FileManager = new AnimFileManager(fi);
                 FileManager.ProcessFile();
+                
             }
         }
     }

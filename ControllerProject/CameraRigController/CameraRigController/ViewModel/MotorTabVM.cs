@@ -40,17 +40,26 @@ namespace CameraRigController.ViewModel
     {
         public MotorTabModel Data
         {
-            get { return (MotorTabModel)GetValue(MotorChannelNameProperty); }
-            set { SetValue(MotorChannelNameProperty, value); }
+            get { return (MotorTabModel)GetValue(DataProperty); }
+            set 
+            {
+                if (Data != null) Data.PropertyChanged -= Value_PropertyChanged;
+                SetValue(DataProperty, value);
+                if (value != null) value.PropertyChanged += Value_PropertyChanged;
+            }
+        }
+
+        private void Value_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            OnPropertyChanged(new DependencyPropertyChangedEventArgs(DataProperty, null, Data));
         }
 
         // Using a DependencyProperty as the backing store for MotorChannelName.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty MotorChannelNameProperty =
+        public static readonly DependencyProperty DataProperty =
             DependencyProperty.Register("Data", typeof(MotorTabModel), typeof(MotorTabVM), new PropertyMetadata(null));
 
         public MotorTabVM()
         {
         }
-
     }
 }

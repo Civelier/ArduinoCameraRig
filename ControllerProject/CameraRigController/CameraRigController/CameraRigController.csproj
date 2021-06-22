@@ -73,11 +73,10 @@
     </ApplicationDefinition>
     <Compile Include="FieldGrid\Editor\Any.cs" />
     <Compile Include="FieldGrid\Editor\FieldGridTemplateSelector.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\DoubleSliderEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\EditorViewModelBase.cs" />
-    <Compile Include="FieldGrid\Editor\ViewModel\Numerics\DoubleNumber.cs" />
-    <Compile Include="FieldGrid\Editor\ViewModel\Numerics\SingleNumber.cs" />
-    <Compile Include="FieldGrid\Editor\ViewModel\Numerics\Int32Number.cs" />
-    <Compile Include="FieldGrid\Editor\ViewModel\Numerics\INumber.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\EnumEditorVM.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\IntSliderEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\ReadonlyStringEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\SimpleIntEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\SliderNumberEditorVM.cs" />

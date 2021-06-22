@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 namespace CameraRigController.FieldGrid
 {
     [System.AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
-    sealed class SliderAttribute : Attribute
+    public sealed class SliderAttribute : Attribute
     {
-        public SliderAttribute(double min, double max)
+        public SliderAttribute(object min, object max)
         {
-            Min = min;
-            Max = max;
+            Min = min as IComparable;
+            Max = max as IComparable;
         }
 
-        public double Min { get; }
-        public double Max { get; }
+        public IComparable Min { get; }
+        public IComparable Max { get; }
     }
 }

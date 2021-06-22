@@ -5,6 +5,7 @@ using CameraRigController.FieldGrid;
 using System.ComponentModel;
 using System.Linq;
 using CameraRigController.FieldGrid.Editor.ViewModel;
+using CameraRigController.FieldGrid;
 
 namespace ControllerInterfaceTests
 {
@@ -81,6 +82,18 @@ namespace ControllerInterfaceTests
                 }
             }
 
+            private int _value4;
+            
+            [Slider(0, 10)]
+            public int Value4
+            {
+                get => _value4;
+                set
+                {
+                    _value4 = value;
+                    OnPropertyChanged(nameof(Value4));
+                }
+            }
 
             public event PropertyChangedEventHandler PropertyChanged;
 
@@ -146,6 +159,30 @@ namespace ControllerInterfaceTests
 
             obj.Value3 = 10;
             value3.ObjectValue.Should().Be(10);
+        }
+
+        [TestMethod]
+        public void TestIntSlider()
+        {
+            var obj = new DemoObject1() { Value4 = 6 };
+
+            var collection = FieldGridUtillities.ToVMCollection(obj);
+            var value4 = collection.First((p) => p.PropertyName == "Value4").As<IntSliderEditorVM>();
+
+            value4.Should().BeOfType<IntSliderEditorVM>();
+            value4.Minimum.Should().Be(0);
+            value4.Maximum.Should().Be(10);
+            value4.ObjectValue.Should().Be(6);
+
+            obj.Value4 = 10;
+            value4.ObjectValue.Should().Be(10);
+        }
+
+        [TestMethod]
+        public void TestEnumInheritance()
+        {
+            var e = RefreshProperties.Repaint;
+            e.GetType().IsSubclassOf(typeof(Enum)).Should().BeTrue();
         }
     }
 }

@@ -48,9 +48,6 @@ namespace CameraRigController.ViewModel
             ////}
 
             SimpleIoc.Default.Register<MainViewModel>();
-            SimpleIoc.Default.Register<MotorTabsVM>();
-            SimpleIoc.Default.Register<MotorTabModel>();
-            SimpleIoc.Default.Register<FieldGridVM>(() => new FieldGridVM() { Target = Motor1 });
         }
 
         public MainViewModel Main
@@ -60,31 +57,6 @@ namespace CameraRigController.ViewModel
                 return ServiceLocator.Current.GetInstance<MainViewModel>();
             }
         }
-
-        public MotorTabsVM MotorTabs
-        {
-            get
-            {
-                return ServiceLocator.Current.GetInstance<MotorTabsVM>();
-            }
-        }
-
-        public FieldGridVM FieldGrid1
-        {
-            get
-            {
-                return ServiceLocator.Current.GetInstance<FieldGridVM>();
-            }
-        }
-
-        public MotorTabModel Motor1
-        {
-            get
-            {
-                return ServiceLocator.Current.GetInstance<MotorTabModel>();
-            }
-        }
-
 
         public static void Cleanup()
         {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CameraRigController.FieldGrid;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -48,6 +49,32 @@ namespace CameraRigController.Model
             }
         }
 
+        private int _itg2;
+
+        [Slider(0, 10)]
+        public int Itg2
+        {
+            get => _itg2;
+            set
+            {
+                _itg2 = value;
+                OnPropertyChanged(nameof(Itg2));
+            }
+        }
+
+        private StringComparison _enumVar;
+
+        public StringComparison EnumVar
+        {
+            get => _enumVar;
+            set
+            {
+                _enumVar = value;
+                OnPropertyChanged(nameof(EnumVar));
+            }
+        }
+
+
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -61,6 +88,5 @@ namespace CameraRigController.Model
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
     }
 }
