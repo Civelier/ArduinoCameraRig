@@ -5,7 +5,7 @@
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CameraRigController"
-        xmlns:View="clr-namespace:CameraRigController.View" xmlns:fieldgrid="clr-namespace:CameraRigController.FieldGrid" x:Class="CameraRigController.MainWindow"
+        xmlns:fieldgrid="clr-namespace:CameraRigController.FieldGrid" x:Class="CameraRigController.MainWindow"
         mc:Ignorable="d" Height="466" Width="793" DataContext="{Binding NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True, Source={StaticResource Locator}}" Title="{Binding Main.Title}">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closed">

@@ -28,7 +28,7 @@ namespace CameraRigController.ViewModel
         public MotorTabsVM()
         {
             _tabs = new ObservableCollection<MotorTabVM>();
-            var count = 2;
+            var count = 1;
             for (int i = 0; i < count; i++)
             {
                 Tabs.Add(new MotorTabVM() { Data = new MotorTabModel() 
@@ -36,6 +36,7 @@ namespace CameraRigController.ViewModel
                     MotorChannelName = $"Motor {i}",
                     AnnimationChannelID = i,
                     StepsPerRevolution = 200,
+                    MotorChannelID = i,
                 }});
             }
         }

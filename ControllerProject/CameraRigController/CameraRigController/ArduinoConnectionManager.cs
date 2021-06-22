@@ -28,7 +28,6 @@ namespace CameraRigController
         public SerialPort Port { get; private set; }
         Thread _arduinoPlay;
         private List<AnimChannel> _data;
-        Dispatcher Dispatcher;
         private bool _abort;
         private bool _run;
         private bool _running;
@@ -170,9 +169,9 @@ namespace CameraRigController
             return new ArduinoRecievePacket(res).Status;
         }
 
-        private void SendKeyframeData(Keyframe keyframe, UInt16 id)
+        private void SendKeyframeData(Keyframe keyframe, int id)
         {
-            SendDataPacket(new ArduinoSendKeyframePacket(id, keyframe.MS, keyframe.Value).ToString());
+            SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, keyframe.MS, keyframe.Value).ToString());
         }
 
         private string ReadNextLine()
@@ -230,7 +229,7 @@ namespace CameraRigController
                             {
                                 if (!_run) break;
                                 if (_abort) return;
-                                SendKeyframeData(keyframe, channel.MotorInfo.MotorID);
+                                SendKeyframeData(keyframe, channel.MotorInfo.MotorChannelID);
                                 Thread.Sleep(10);
                             }
                             if (!_run) break;

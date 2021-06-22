@@ -1,3 +1,4 @@
+using CameraRigController.Model;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using Microsoft.Win32;
@@ -141,7 +142,7 @@ namespace CameraRigController.ViewModel
 
         void Play()
         {
-            _connectionManager.Play();
+            _connectionManager.Load(ComputeChannels().ToList());
         }
 
         void RefreshPorts()
@@ -179,7 +180,10 @@ namespace CameraRigController.ViewModel
         private void Rdo_Click(object sender, RoutedEventArgs e)
         {
             var rdo = (RadioButton)sender;
-            rdo.IsChecked = true;
+            if ((rdo.IsChecked ?? false))
+            {
+                _connectionManager.ComPort = (string)rdo.Content;
+            }
         }
 
         private void Close()
@@ -191,9 +195,13 @@ namespace CameraRigController.ViewModel
         {
         }
 
-        private AnimChannel ComputeChannel(RawAnimChannel rawAnimChannel, MotorInfo motorInfo, AnimFileInfo fileInfo)
+        private AnimChannel ComputeChannel(MotorTabModel motorInfo)
         {
+            if (!FileManager.AnimFileInfo.HasValue) return null;
+
+            var fileInfo = FileManager.AnimFileInfo.Value;
             var keyframes = new List<Keyframe>();
+            var rawAnimChannel = fileInfo.Channels[motorInfo.AnnimationChannelID];
 
             foreach (var kf in rawAnimChannel.Keyframes)
             {
@@ -201,7 +209,16 @@ namespace CameraRigController.ViewModel
                 Int32 value = (Int32)(kf.Value / (2.0 * Math.PI) * motorInfo.StepsPerRevolution * 16.0);
                 keyframes.Add(new Keyframe(ms, value));
             }
-            return new AnimChannel(keyframes, rawAnimChannel.ChannelID, motorInfo);
+            return new AnimChannel(keyframes, motorInfo);
+        }
+
+        IEnumerable<AnimChannel> ComputeChannels()
+        {
+            foreach (var motorInfo in Tabs.Tabs)
+            {
+                var channel = ComputeChannel(motorInfo.Data);
+                if (channel != null) yield return channel;
+            }
         }
 
         void OpenFile()

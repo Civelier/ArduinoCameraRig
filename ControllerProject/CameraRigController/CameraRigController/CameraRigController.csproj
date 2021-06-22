@@ -97,17 +97,6 @@
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\MotorTabVM.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
-    <Compile Include="View\MotorTab.xaml.cs">
-      <DependentUpon>MotorTab.xaml</DependentUpon>
-    </Compile>
-    <Page Include="AnimFileConfig.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="ChannelTab.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="FieldGrid\FieldGridControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -117,7 +106,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Compile Include="AnimChannel.cs" />
-    <Compile Include="AnimFileConfig.xaml.cs" />
     <Compile Include="AnimFileInfo.cs" />
     <Compile Include="AnimFileManager.cs" />
     <Compile Include="App.xaml.cs">
@@ -127,19 +115,13 @@
     <Compile Include="ArduinoConfig.cs" />
     <Compile Include="ArduinoConnectionManager.cs" />
     <Compile Include="ArduinoEncoder.cs" />
-    <Compile Include="ChannelTab.xaml.cs" />
     <Compile Include="Keyframe.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="View\MotorTab.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MotorInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -166,6 +148,8 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="View\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

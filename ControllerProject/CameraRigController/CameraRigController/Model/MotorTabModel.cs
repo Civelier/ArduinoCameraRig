@@ -23,6 +23,18 @@ namespace CameraRigController.Model
             }
         }
 
+        private int _motorChannelID;
+        [ReadOnly(true)]
+        public int MotorChannelID
+        {
+            get => _motorChannelID;
+            set
+            {
+                _motorChannelID = value;
+                OnPropertyChanged(nameof(MotorChannelID));
+            }
+        }
+
         private int _animationChannelID;
 
         [UpDownBox(0, 3, 0, 1)]

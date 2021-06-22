@@ -8,7 +8,6 @@ namespace CameraRigController
 {
     public class ArduinoConfig
     {
-        public Dictionary<int, MotorInfo> MotorChannels { get; set; }
 
         public ArduinoConfig()
         {
