@@ -24,7 +24,7 @@ namespace CameraRigController.ViewModel
     /// See http://www.galasoft.ch/mvvm
     /// </para>
     /// </summary>
-    public class MainViewModel : ViewModelBase
+    public class MainViewModel : DependencyObject
     {
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
@@ -38,14 +38,7 @@ namespace CameraRigController.ViewModel
             RefreshPortsCommand = new RelayCommand(RefreshPorts);
             CloseCommand = new RelayCommand(Close);
             _lastPorts = new string[0];
-            if (IsInDesignMode)
-            {
-                Title = "Hello MVVM Light (Design Mode)";
-            }
-            else
-            {
-                Title = "Hello MVVM Light";
-            }
+            Title = "Camerarduino controller interface";
         }
 
 
@@ -58,49 +51,64 @@ namespace CameraRigController.ViewModel
         private ObservableCollection<RadioButton> _ports = new ObservableCollection<RadioButton>();
         private IEnumerable<string> _lastPorts;
 
-        public AnimFileManager FileManager 
+
+
+
+        public AnimFileManager FileManager
         {
-            get => _fileManager;
-            set
-            {
-                var old = _fileManager;
-                _fileManager = value;
-                RaisePropertyChanged(nameof(FileManager), old, value);
-                Filename = $"Filename: {FileManager?.AnimFileInfo?.File.Name ?? ""}";
-                NumberOfChannels = $"Number of channels: {FileManager?.AnimFileInfo?.ChannelCount.ToString() ?? ""}";
-                FPS = $"FPS: {FileManager?.AnimFileInfo?.FPS.ToString() ?? ""}";
-            }
+            get { return (AnimFileManager)GetValue(FileManagerProperty); }
+            set { SetValue(FileManagerProperty, value); }
         }
+
+        // Using a DependencyProperty as the backing store for FileManager.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FileManagerProperty =
+            DependencyProperty.Register("FileManager", typeof(AnimFileManager), typeof(MainViewModel), new PropertyMetadata(null, OnFileManagerChanged));
+
+        static void OnFileManagerChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            var instance = sender as MainViewModel;
+            instance.Filename = $"Filename: {instance.FileManager?.AnimFileInfo?.File.Name ?? ""}";
+            instance.NumberOfChannels = $"Number of channels: {instance.FileManager?.AnimFileInfo?.ChannelCount.ToString() ?? ""}";
+            instance.FPS = $"FPS: {instance.FileManager?.AnimFileInfo?.FPS.ToString() ?? ""}";
+        }
+
+
+
         public string Filename
         {
-            get => _filename; 
-            set
-            {
-                var old = _filename;
-                _filename = value;
-                RaisePropertyChanged(nameof(Filename), old, value, true);
-            }
+            get { return (string)GetValue(FilenameProperty); }
+            set { SetValue(FilenameProperty, value); }
         }
+
+        // Using a DependencyProperty as the backing store for Filename.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FilenameProperty =
+            DependencyProperty.Register("Filename", typeof(string), typeof(MainViewModel), new PropertyMetadata("Filename:"));
+
+
+
+
         public string NumberOfChannels
         {
-            get => _numberOfChannels;
-            set
-            {
-                var old = _numberOfChannels;
-                _numberOfChannels = value;
-                RaisePropertyChanged(nameof(NumberOfChannels), old, value, true);
-            }
+            get { return (string)GetValue(NumberOfChannelsProperty); }
+            set { SetValue(NumberOfChannelsProperty, value); }
         }
+
+        // Using a DependencyProperty as the backing store for NumberOfChannels.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty NumberOfChannelsProperty =
+            DependencyProperty.Register("NumberOfChannels", typeof(string), typeof(MainViewModel), new PropertyMetadata("Number of channels:"));
+
+
         public string FPS
         {
-            get => _fps;
-            set
-            {
-                var old = _fps;
-                _fps = value;
-                RaisePropertyChanged(nameof(FPS), old, value, true);
-            }
+            get { return (string)GetValue(FPSProperty); }
+            set { SetValue(FPSProperty, value); }
         }
+
+        // Using a DependencyProperty as the backing store for FPS.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FPSProperty =
+            DependencyProperty.Register("FPS", typeof(string), typeof(MainViewModel), new PropertyMetadata("FPS:"));
+
+
 
         public ObservableCollection<RadioButton> Ports
         {
@@ -109,7 +117,6 @@ namespace CameraRigController.ViewModel
             {
                 var old = _ports;
                 _ports = value;
-                RaisePropertyChanged(nameof(Ports), old, value, true);
             }
         }
 
@@ -122,7 +129,6 @@ namespace CameraRigController.ViewModel
             {
                 var old = _tabs;
                 _tabs = value;
-                RaisePropertyChanged(nameof(Tabs), old, value, true);
             }
         }
 
@@ -215,9 +221,9 @@ namespace CameraRigController.ViewModel
                 //    return;
                 //}
                 var fi = new FileInfo(openFile.FileName);
-                FileManager = new AnimFileManager(fi);
-                FileManager.ProcessFile();
-                
+                var fm = new AnimFileManager(fi);
+                fm.ProcessFile();
+                FileManager = fm;
             }
         }
     }

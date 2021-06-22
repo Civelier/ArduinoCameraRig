@@ -31,7 +31,12 @@ namespace CameraRigController.ViewModel
             var count = 2;
             for (int i = 0; i < count; i++)
             {
-                Tabs.Add(new MotorTabVM() { Data = new MotorTabModel() { MotorChannelName = $"Motor {i}" } });
+                Tabs.Add(new MotorTabVM() { Data = new MotorTabModel() 
+                { 
+                    MotorChannelName = $"Motor {i}",
+                    AnnimationChannelID = i,
+                    StepsPerRevolution = 200,
+                }});
             }
         }
     }

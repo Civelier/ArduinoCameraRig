@@ -24,6 +24,7 @@ namespace ControllerInterfaceTests
         [DataRow("Value15RGB", "Value 15 RGB")]
         [DataRow("Value15RGBGood1bTo5a", "Value 15 RGB good 1b to 5a")]
         [DataRow("MGHello24World", "MG hello 24 world")]
+        [DataRow("AnnimationChannelID", "Annimation channel ID")]
 
         public void TestNicifyNames(string value, string expected)
         {

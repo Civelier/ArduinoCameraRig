@@ -23,57 +23,30 @@ namespace CameraRigController.Model
             }
         }
 
-        private string _testReadonly;
+        private int _animationChannelID;
 
-        [DisplayName("Test value")]
-        [ReadOnly(true)]
-        public string TestReadonly
+        [UpDownBox(0, 3, 0, 1)]
+        public int AnnimationChannelID
         {
-            get => _testReadonly;
+            get => _animationChannelID;
             set
             {
-                _testReadonly = value;
-                OnPropertyChanged(nameof(TestReadonly));
+                _animationChannelID = value;
+                OnPropertyChanged(nameof(AnnimationChannelID));
             }
         }
 
-        private int _itg1;
-        [DisplayName("Number")]
-        public int Itg1
+        private int _stepsPerRervs;
+
+        public int StepsPerRevolution
         {
-            get => _itg1;
+            get => _stepsPerRervs;
             set
             {
-                _itg1 = value;
-                OnPropertyChanged(nameof(Itg1));
+                _stepsPerRervs = value;
+                OnPropertyChanged(nameof(StepsPerRevolution));
             }
         }
-
-        private int _itg2;
-
-        [Slider(0, 10)]
-        public int Itg2
-        {
-            get => _itg2;
-            set
-            {
-                _itg2 = value;
-                OnPropertyChanged(nameof(Itg2));
-            }
-        }
-
-        private StringComparison _enumVar;
-
-        public StringComparison EnumVar
-        {
-            get => _enumVar;
-            set
-            {
-                _enumVar = value;
-                OnPropertyChanged(nameof(EnumVar));
-            }
-        }
-
 
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -81,7 +54,6 @@ namespace CameraRigController.Model
         public MotorTabModel()
         {
             MotorChannelName = "Motor";
-            TestReadonly = "Test readonly value";
         }
 
         private void OnPropertyChanged(string propertyName)

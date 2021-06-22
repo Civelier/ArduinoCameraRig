@@ -88,6 +88,7 @@
     <Compile Include="FieldGrid\FieldGridTemplateAttribute.cs" />
     <Compile Include="FieldGrid\FieldGridUtillities.cs" />
     <Compile Include="FieldGrid\FieldGridVM.cs" />
+    <Compile Include="FieldGrid\ListSelector.cs" />
     <Compile Include="FieldGrid\SliderAttribute.cs" />
     <Compile Include="FieldGrid\UpDownBoxAttribute.cs" />
     <Compile Include="Model\MotorTabModel.cs" />

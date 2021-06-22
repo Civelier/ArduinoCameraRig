@@ -53,9 +53,9 @@
             <Frame x:Name="ChannelFrame" Visibility="Hidden" Grid.ColumnSpan="2" Margin="0,38,0,80" Grid.Row="1"/>
             <GroupBox Header="Animation file" Margin="10,10,7,0">
                 <Canvas Margin="0,0,-2,-4">
-                    <Label x:Name="FileNameLabel" Content="{Binding Main.Filename, Mode=OneWay}" Width="321" DataContext="{Binding Mode=OneWay}"/>
-                    <Label x:Name="ChannelNumberLabel" Content="{Binding Main.NumberOfChannels, Mode=OneWay}" Height="26" Canvas.Top="26" Width="321"/>
-                    <Label x:Name="FPSLabel" Content="{Binding Main.FPS, Mode=OneWay}" Canvas.Top="52"/>
+                    <Label x:Name="FileNameLabel" Content="{Binding Main.Filename, Mode=TwoWay}" Width="321"/>
+                    <Label x:Name="ChannelNumberLabel" Content="{Binding Main.NumberOfChannels, Mode=TwoWay}" Height="26" Canvas.Top="26" Width="321"/>
+                    <Label x:Name="FPSLabel" Content="{Binding Main.FPS, Mode=TwoWay}" Canvas.Top="52"/>
                 </Canvas>
             </GroupBox>
             <TabControl x:Name="TabCTL" Margin="10,10,10,111" Grid.ColumnSpan="2" Grid.Row="1" ItemsSource="{Binding Main.Tabs.Tabs}">

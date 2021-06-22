@@ -202,13 +202,16 @@ namespace CameraRigController.FieldGrid
                                 if (!capitalSequence)
                                 {
                                     capitalSequence = true;
-                                    
                                 }
                                 sb.Append(name[i - 1]);
                             }
                             else
                             {
                                 if (numberSequence && i + 1 < name.Length && char.IsUpper(name[i + 1]))
+                                {
+                                    sb.Append(' ');
+                                }
+                                else if (i + 1 < name.Length && char.IsUpper(name[i + 1]))
                                 {
                                     sb.Append(' ');
                                 }
