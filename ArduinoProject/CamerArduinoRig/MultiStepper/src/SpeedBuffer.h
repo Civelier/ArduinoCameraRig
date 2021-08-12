@@ -9,10 +9,10 @@
 
 struct SpeedBuffer
 {
-	size_t Count;
-	size_t Index;
-	size_t Size;
-	uint32_t* Deltas;
+	size_t Count = 0;
+	size_t Index = 0;
+	size_t Size = 0;
+	uint32_t* Deltas = nullptr;
 	SpeedBuffer(size_t size)
 	{
 		Size = size;

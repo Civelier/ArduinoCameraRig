@@ -30,8 +30,8 @@ class MultiStepperClass
 {
 private:
 	StepperDriver* m_drivers[MSTEP_MAX_COUNT];
-	size_t m_count;
-	instructionCB_t m_callback;
+	size_t m_count = 0;
+	instructionCB_t m_callback = nullptr;
 public:
 private:
 public:

@@ -81,10 +81,10 @@ struct LogarithmicStepDistribution
 
 	MicroStep MicroStepForSpeed(float sps)
 	{
-		if (sps >= Values.Middle2_1) return MicroStep::MSStep;
+		/*if (sps >= Values.Middle2_1) return MicroStep::MSStep;
 		if (sps >= Values.Middle4_2) return MicroStep::MSHalf;
 		if (sps >= Values.Middle8_4) return MicroStep::MSQuarter;
-		if (sps >= Values.Middle16_8) return MicroStep::MSEighth;
+		if (sps >= Values.Middle16_8) return MicroStep::MSEighth;*/
 		return MicroStep::MSSixteenth;
 	}
 };

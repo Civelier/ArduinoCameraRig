@@ -11,14 +11,9 @@
 
 #define DBGValue(value) Serial.print(#value); Serial.print(": "); Serial.println(value)
 
-#ifdef MSTEP_DEBUG
-
 #ifndef MSTEP_DEBUG_STREAM
 #define MSTEP_DEBUG_STREAM Serial
 #endif // !MSTEP_DEBUG_STREAM
-
-
-#endif // MSTEP_DEBUG
 
 enum StepType
 {

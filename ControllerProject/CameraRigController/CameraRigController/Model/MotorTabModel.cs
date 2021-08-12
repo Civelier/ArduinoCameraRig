@@ -12,7 +12,6 @@ namespace CameraRigController.Model
     public class MotorTabModel : INotifyPropertyChanged
     {
         private string _motorChannelName;
-
         public string MotorChannelName
         {
             get { return _motorChannelName; }

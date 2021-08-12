@@ -33,6 +33,7 @@ namespace CameraRigController
         private bool _running;
         private StringBuilder _buffer = new StringBuilder();
         private string _comPort;
+        private bool _firstPacket;
 
         public ArduinoConnectionManager()
         {
@@ -42,17 +43,25 @@ namespace CameraRigController
 
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            var s = Port.ReadLine();
-            var status = new ArduinoRecievePacket(s);
-            if (status.Status == ArduinoStatusCode.Debug)
+            try
             {
-                Debug.WriteLine(Port.ReadLine());
+                var s = Port.ReadLine();
+                var status = new ArduinoRecievePacket(s);
+                if (status.Status == ArduinoStatusCode.Debug)
+                {
+                    Debug.WriteLine(Port.ReadLine());
+                }
+                else
+                {
+                    _lastPacket = status;
+                    _newPacket = true;
+                }
             }
-            else
+            catch (IOException ex)
             {
-                _lastPacket = status;
-                _newPacket = true;
+                Debug.WriteLine(ex.Message);
             }
+            
         }
 
         private bool AttemptConnection()
@@ -171,7 +180,12 @@ namespace CameraRigController
 
         private void SendKeyframeData(Keyframe keyframe, int id)
         {
-            SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, keyframe.MS, keyframe.Value).ToString());
+            if (_firstPacket)
+            {
+                _firstPacket = false;
+                SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, 0, keyframe.Value).ToString());
+            }
+            SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, keyframe.MS + 1500, keyframe.Value).ToString());
         }
 
         private string ReadNextLine()
@@ -215,14 +229,17 @@ namespace CameraRigController
                     Thread.Sleep(50);
                 }
                 _running = true;
-                if (ResetArduino())
+                //if (ResetArduino())
+                if (TryConnect())
                 {
+                    Thread.Sleep(500);
                     Debug.WriteLine("Arduino connected");
                     while (_run)
                     {
                         //var status = SendStatusRequest();
                         //if (status == ArduinoStatusCode.Ready)
                         //{
+                        _firstPacket = true;
                         foreach (var channel in _data)
                         {
                             foreach (var keyframe in channel.Keyframes)
@@ -251,21 +268,29 @@ namespace CameraRigController
                         //}
                         Debug.WriteLine("Upload complete");
                         _run = false;
+                        //while (!_abort)
+                        //{
+                        //    if (_newPacket)
+                        //    {
+                        //        _newPacket = false;
+                        //        if (_lastPacket.Status == ArduinoStatusCode.Done) break;
+                        //    }
+                        //}
                     }
                 }
-                Thread.Sleep(1000);
-                if (Port.IsOpen)
-                {
-                    Port.Dispose();
-                    //while (!_abort)
-                    //{
-                    //    if (_newPacket)
-                    //    {
-                    //        if (_lastPacket.Status == ArduinoStatusCode.Done) break;
-                    //    }
-                    //}
-                    //Debug.WriteLine("Playback done");
-                }
+                //Thread.Sleep(1000);
+                //if (Port.IsOpen)
+                //{
+                //    Port.Dispose();
+                //    //while (!_abort)
+                //    //{
+                //    //    if (_newPacket)
+                //    //    {
+                //    //        if (_lastPacket.Status == ArduinoStatusCode.Done) break;
+                //    //    }
+                //    //}
+                //    //Debug.WriteLine("Playback done");
+                //}
             }
         }
 

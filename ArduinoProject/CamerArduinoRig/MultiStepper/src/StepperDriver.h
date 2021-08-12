@@ -18,12 +18,12 @@ struct StepperDriver
 	uint32_t NumberOfSteps;
 	pin_t Step;
 	pin_t Dir;
-	pin_t MS1 = NOT_A_PIN;
-	pin_t MS2 = NOT_A_PIN;
-	pin_t MS3 = NOT_A_PIN;
+	pin_t MS1 = 255;
+	pin_t MS2 = 255;
+	pin_t MS3 = 255;
 	LogarithmicStepDistribution LogDistribution;
 	StepType StepCompatibility;
-	IDriverInstruction* Instruction;
+	IDriverInstruction* Instruction = nullptr;
 	int8_t thisStep;
 	StepperDriver() { }
 	StepperDriver(uint32_t numberOfSteps, pin_t step, pin_t dir)
@@ -51,10 +51,7 @@ struct StepperDriver
 		MS2 = ms2;
 		MS3 = ms3;
 		StepCompatibility = StepType::Sixteenth;
-		LogDistribution.MaxStepPerSec = 800;
-		LogDistribution.StepScaling = 1050;
-		LogDistribution.Factor = 4.5f;
-		LogDistribution.Base = 1.07f;
+		LogDistribution = { 800, 1050, 4.5f, 1.07f };
 
 		LogDistribution.ComputeValues();
 	}

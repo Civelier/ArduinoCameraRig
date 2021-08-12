@@ -5,13 +5,17 @@
 */
 
 //#define MSTEP_DEBUG
+#define USB Serial
+
 #include "MultiStepper.h"
 #include "Keyframe.h"
 #include "KeyframeInstruction.h"
 
 #define CHANNEL_COUNT 1
 
-StepperDriver* Motor1 = new StepperDriver(200, 3, 2, 4, 5, 6);
+
+StepperDriver* Motor1 = new StepperDriver(200, 23, 22, 24, 25, 26);
+StepperDriver* Motor2 = new StepperDriver(200, 28, 27, 29, 30, 31);
 
 enum StatusCode
 {
@@ -129,7 +133,7 @@ struct CircularBuffer
 	}
 };
 
-#define DebugValue(value) Serial.println(StatusCode::STDebug); Serial.print(#value); Serial.print(" = "); Serial.println(value)
+#define DebugValue(value) USB.println(StatusCode::STDebug); USB.print(#value); USB.print(" = "); USB.println(value)
 
 StatusCode status = StatusCode::STReady;
 CircularBuffer Buffer = CircularBuffer(10);
@@ -141,7 +145,7 @@ void ComputeInstruction(Keyframe start, Keyframe end)
 {
 	if (start.ChannelID == 0)
 	{
-		Motor1->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &LinearCurve));
+		Motor1->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &QuadraticInOutCurve));
 	}
 }
 
@@ -154,8 +158,8 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 		Running = false;
 		status = StatusCode::STReady;
 		Serial.println(STDone);
-		Serial.println(StatusCode::STDebug);
-		Serial.println("Done");
+		//Serial.println(StatusCode::STDebug);
+		//Serial.println("Done");
 		Buffer.Clear();
 		sync->Stop();
 		//Motor1->SetInstruction(nullptr);
@@ -173,22 +177,25 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 // the setup function runs once when you press reset or power the board
 void setup()
 {
-	Serial.begin(115200);
+	USB.begin(115200);
+	while (!USB);
+
 	MStep.AttachDriver(Motor1);
+	MStep.AttachDriver(Motor2);
 	MStep.AttachCallback(&InstructionCallback);
-	Serial.println(status);
+	USB.println(status);
 }
 
 
 
 void ReadSerial()
 {
-	if (!Serial.available()) return;
-	int cmd = Serial.parseInt();
+	if (!USB.available()) return;
+	int cmd = USB.parseInt();
 	switch (cmd)
 	{
 	case 1: // Status request packet
-		Serial.println(status);
+		USB.println(status);
 		break;
 	case 2: // Error clear packet
 		break;
@@ -197,7 +204,7 @@ void ReadSerial()
 		int steps[CHANNEL_COUNT];
 		for (size_t i = 0; i < CHANNEL_COUNT; i++)
 		{
-			steps[i] = Serial.parseInt();
+			steps[i] = USB.parseInt();
 		}
 	}
 	break;
@@ -219,9 +226,9 @@ void ReadSerial()
 		break;
 	case 7: // Keyframe packet
 	{
-		uint16_t id = Serial.parseInt();
-		uint32_t ms = Serial.parseInt();
-		uint32_t steps = Serial.parseInt();
+		uint16_t id = USB.parseInt();
+		uint32_t ms = USB.parseInt();
+		uint32_t steps = USB.parseInt();
 		Buffer.Write(Keyframe{ id, ms, steps });
 	}
 	break;
@@ -246,6 +253,11 @@ void loop()
 		hit = 0;
 	}*/
 	ReadSerial();
-
+	
 	MStep.UpdateDrivers();
 }
+
+/*
+7 0 0 0 7 0 1500 0 7 0 5670 442 7 0 14429 -344 7 0 19434 0 4
+*/
+

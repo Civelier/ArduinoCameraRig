@@ -10,9 +10,9 @@
 class TimeSync
 {
 private:
-	uint32_t m_startMicros;
+	uint32_t m_startMicros = 0;
 public:
-	bool Started;
+	bool Started = false;
 public:
 	TimeSync();
 	void Start();

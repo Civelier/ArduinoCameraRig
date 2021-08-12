@@ -10,18 +10,18 @@
 class KeyframeDriverInstruction : public IDriverInstruction
 {
 private:
-    uint32_t nextPulse;
-    uint32_t pulseDelay;
-    int32_t steps;
-    bool dir;
-    Keyframe m_start;
-    Keyframe m_end;
-    TimeSync* m_sync;
-    bool m_firstRun;
+    uint32_t nextPulse = 0;
+    uint32_t pulseDelay = 0;
+    int32_t steps = 0;
+    bool dir = false;
+    Keyframe m_start = Keyframe();
+    Keyframe m_end = Keyframe();
+    TimeSync* m_sync = nullptr;
+    bool m_firstRun = true;
     SpeedBuffer m_buffer = SpeedBuffer(20);
-    curve_t m_curve;
-    int32_t stepsLeft;
-    int32_t lastStep;
+    curve_t m_curve = nullptr;
+    int32_t stepsLeft = 0;
+    int32_t lastStep = 0;
 private:
     int8_t Repeat(int8_t step, int8_t length);
 public:
