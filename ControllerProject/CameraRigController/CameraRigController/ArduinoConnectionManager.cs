@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CameraRigController.Properties;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -33,7 +34,6 @@ namespace CameraRigController
         private bool _running;
         private StringBuilder _buffer = new StringBuilder();
         private string _comPort;
-        private bool _firstPacket;
 
         public ArduinoConnectionManager()
         {
@@ -49,6 +49,7 @@ namespace CameraRigController
                 var status = new ArduinoRecievePacket(s);
                 if (status.Status == ArduinoStatusCode.Debug)
                 {
+                    Debug.Write("<Arduino debug> ");
                     Debug.WriteLine(Port.ReadLine());
                 }
                 else
@@ -94,6 +95,10 @@ namespace CameraRigController
             return true;
         }
 
+        /// <summary>
+        /// Starts a thread to upload to the arduino and waits until thread has started.
+        /// </summary>
+        /// <param name="channels">Channels to send to the arduino.</param>
         public void Load(List<AnimChannel> channels)
         {
             _data = channels;
@@ -142,16 +147,6 @@ namespace CameraRigController
             return TryConnect();
         }
 
-        public void Play()
-        {
-            //if (_data == null)
-            //{
-            //    MessageBox.Show("The data needs to be loaded before playing.");
-            //    return;
-            //}
-            //SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
-        }
-
         private void OpenPort()
         {
             Port = new SerialPort();
@@ -178,13 +173,13 @@ namespace CameraRigController
             return new ArduinoRecievePacket(res).Status;
         }
 
+        private void SendFirstKeyframeData(Keyframe keyframe, int id)
+        {
+            SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, 0, keyframe.Value).ToString());
+        }
+
         private void SendKeyframeData(Keyframe keyframe, int id)
         {
-            if (_firstPacket)
-            {
-                _firstPacket = false;
-                SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, 0, keyframe.Value).ToString());
-            }
             SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, keyframe.MS + 1500, keyframe.Value).ToString());
         }
 
@@ -218,6 +213,25 @@ namespace CameraRigController
             //}
         }
 
+        private readonly struct KeyframeInfo : IComparable<KeyframeInfo>
+        {
+            public readonly Keyframe Keyframe;
+            public readonly int MotorChannelID;
+
+            public KeyframeInfo(Keyframe keyframe, int motorChannelID)
+            {
+                Keyframe = keyframe;
+                MotorChannelID = motorChannelID;
+            }
+
+            public int CompareTo(KeyframeInfo other)
+            {
+                int timeComparisson = Keyframe.MS.CompareTo(other.Keyframe.MS);
+                if (timeComparisson == 0) return MotorChannelID.CompareTo(other.MotorChannelID);
+                return timeComparisson;
+            }
+        }
+
         private void PlayRoutine()
         {
             while (!_abort)
@@ -239,19 +253,39 @@ namespace CameraRigController
                         //var status = SendStatusRequest();
                         //if (status == ArduinoStatusCode.Ready)
                         //{
-                        _firstPacket = true;
+                        int size = 0;
+                        foreach (var channel in _data)
+                        {
+                            size += channel.Keyframes.Count;
+                        }
+                        var keyframeInfos = new List<KeyframeInfo>(size);
+
                         foreach (var channel in _data)
                         {
                             foreach (var keyframe in channel.Keyframes)
                             {
-                                if (!_run) break;
-                                if (_abort) return;
-                                SendKeyframeData(keyframe, channel.MotorInfo.MotorChannelID);
-                                Thread.Sleep(10);
+                                keyframeInfos.Add(new KeyframeInfo(keyframe, channel.MotorInfo.MotorChannelID));
                             }
+                        }
+
+
+                        keyframeInfos.Sort();
+                        Debug.WriteLine($"Buffer length: {keyframeInfos.Count}");
+                        foreach (var channel in _data)
+                        {
+                            SendFirstKeyframeData(channel.Keyframes.FirstOrDefault(), channel.MotorInfo.MotorChannelID);
+                            Thread.Sleep(1);
                             if (!_run) break;
                             if (_abort) return;
                         }
+                        foreach (var keyframeInfo in keyframeInfos)
+                        {
+                            SendKeyframeData(keyframeInfo.Keyframe, keyframeInfo.MotorChannelID);
+                            Thread.Sleep(1);
+                            if (!_run) break;
+                            if (_abort) return;
+                        }
+                        
                         if (!_run) break;
                         if (_abort) return;
                         //}

@@ -11,11 +11,16 @@
 #include "Keyframe.h"
 #include "KeyframeInstruction.h"
 
-#define CHANNEL_COUNT 1
+#define CHANNEL_COUNT 2
 
 
-StepperDriver* Motor1 = new StepperDriver(200, 23, 22, 24, 25, 26);
-StepperDriver* Motor2 = new StepperDriver(200, 28, 27, 29, 30, 31);
+StepperDriver* Motor0 = new StepperDriver(200, 23, 22, 24, 25, 26);
+StepperDriver* Motor1 = new StepperDriver(200, 28, 27, 29, 30, 31);
+StepperDriver* Motors[2]
+{
+	Motor0,
+	Motor1,
+};
 
 enum StatusCode
 {
@@ -37,8 +42,11 @@ struct KeyframeBuffer
 	size_t Size;
 	KeyframeBuffer(size_t size)
 	{
-		Size = size;
 		buffer = (Keyframe*)malloc(size * sizeof(Keyframe));
+		Count = 0;
+		Index = 0;
+		ReadIndex = 0;
+		Size = size;
 	}
 
 	void ResetRead()
@@ -90,12 +98,14 @@ struct CircularBuffer
 	Keyframe* buffer;
 	size_t Count;
 	size_t Index;
-	size_t ReadIndex;
+	size_t ReadIndices[CHANNEL_COUNT]{};
 	size_t Size;
 	CircularBuffer(size_t size)
 	{
-		Size = size;
 		buffer = (Keyframe*)malloc(size * sizeof(Keyframe));
+		Count = 0;
+		Index = 0;
+		Size = size;
 	}
 
 	void Write(Keyframe kf)
@@ -108,22 +118,39 @@ struct CircularBuffer
 
 	int Available()
 	{
-		if (Index >= ReadIndex) return Index - ReadIndex;
-		return Count - ReadIndex + Index;
+		size_t minReadIndex{ Count };
+		for (size_t i = 0; i < CHANNEL_COUNT; i++)
+		{
+			minReadIndex = min(minReadIndex, ReadIndices[i]);
+		}
+		if (Index >= minReadIndex) return Index - minReadIndex;
+		return Count - minReadIndex + Index;
 	}
 
 	void Clear()
 	{
 		Count = 0;
-		ReadIndex = 0;
+		for (size_t i = 0; i < CHANNEL_COUNT; i++)
+		{
+			ReadIndices[i] = 0;
+		}
 		Index = 0;
 	}
 
-	Keyframe Read()
+	Keyframe Read(uint16_t channelID)
 	{
-		Keyframe kf = buffer[ReadIndex];
+		while (ReadIndices[channelID] < Index)
+		{
+			if (buffer[ReadIndices[channelID]].ChannelID == channelID) break;
+			ReadIndices[channelID] = (ReadIndices[channelID] + 1) % Size;
+		}
+		Keyframe kf = buffer[ReadIndices[channelID]];
 		//kf.Print();
-		ReadIndex = (ReadIndex + 1) % Size;
+		while (ReadIndices[channelID] < Index)
+		{
+			ReadIndices[channelID] = (ReadIndices[channelID] + 1) % Size;
+			if (buffer[ReadIndices[channelID]].ChannelID == channelID) break;
+		}
 		return kf;
 	}
 
@@ -133,20 +160,55 @@ struct CircularBuffer
 	}
 };
 
-#define DebugValue(value) USB.println(StatusCode::STDebug); USB.print(#value); USB.print(" = "); USB.println(value)
+//Use before printing a debug message. This is ONLY valid for the next line of text printed.
+#define DebugStep() USB.println(StatusCode::STDebug)
+
+
+#define DebugValue(value) DebugStep(); USB.print(#value); USB.print(" = "); USB.println(value); USB.flush()
+
+//Use before printing an error message. This is ONLY valid for the next line of text printed.
+#define PrintErrorStep(message) DebugStep(); USB.print("Error at line <"); USB.print(__LINE__); USB.print(">: ")
 
 StatusCode status = StatusCode::STReady;
-CircularBuffer Buffer = CircularBuffer(10);
-Keyframe last;
+CircularBuffer Buffer = CircularBuffer(500);
+Keyframe last[CHANNEL_COUNT]{};
 TimeSync* sync = new TimeSync();
-bool Running;
+bool Running = false;
+
+StepperDriver* GetMotor(uint16_t channelID)
+{
+	if (channelID < CHANNEL_COUNT)
+	{
+		return Motors[channelID];
+	}
+	PrintErrorStep();
+	USB.print("Attempt to get a motor from an undefined channel ID <id: ");
+	USB.print(channelID);
+	USB.println(">");
+	USB.flush();
+	exit(EXIT_FAILURE);
+	return nullptr;
+	/*switch (channelID)
+	{
+	case 0:
+		return Motor0;
+	case 1:
+		return Motor1;
+	default:
+		PrintErrorStep();
+		USB.print("Attempt to get a motor from an undefined channel ID <id: ");
+		USB.print(channelID);
+		USB.println(">");
+		USB.flush();
+		exit(EXIT_FAILURE);
+		break;
+	}*/
+}
 
 void ComputeInstruction(Keyframe start, Keyframe end)
 {
-	if (start.ChannelID == 0)
-	{
-		Motor1->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &QuadraticInOutCurve));
-	}
+	auto motor = GetMotor(start.ChannelID);
+	motor->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &QuadraticInOutCurve));
 }
 
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
@@ -157,7 +219,7 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 	{
 		Running = false;
 		status = StatusCode::STReady;
-		Serial.println(STDone);
+		USB.println(STDone);
 		//Serial.println(StatusCode::STDebug);
 		//Serial.println("Done");
 		Buffer.Clear();
@@ -165,37 +227,24 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 		//Motor1->SetInstruction(nullptr);
 		return;
 	}
-	if (channelID == 0 && result == DriverInstructionResult::Done)
+	if (result == DriverInstructionResult::Done)
 	{
-		auto kf = Buffer.Read();
-		ComputeInstruction(last, kf);
-		last = kf;
+		auto kf = Buffer.Read(channelID);
+		ComputeInstruction(last[channelID], kf);
+		last[channelID] = kf;
 		//Serial.println(StatusCode::STReadyForInstruction);
 	}
+	
 }
 
-// the setup function runs once when you press reset or power the board
-void setup()
+void serialEvent()
 {
-	USB.begin(115200);
-	while (!USB);
-
-	MStep.AttachDriver(Motor1);
-	MStep.AttachDriver(Motor2);
-	MStep.AttachCallback(&InstructionCallback);
-	USB.println(status);
-}
-
-
-
-void ReadSerial()
-{
-	if (!USB.available()) return;
 	int cmd = USB.parseInt();
 	switch (cmd)
 	{
 	case 1: // Status request packet
 		USB.println(status);
+		USB.flush();
 		break;
 	case 2: // Error clear packet
 		break;
@@ -210,12 +259,15 @@ void ReadSerial()
 	break;
 	case 4: // Start packet
 	{
-		auto start = Buffer.Read();
-		auto end = Buffer.Read();
-		last = end;
 		status = StatusCode::STRunning;
 		Running = true;
-		ComputeInstruction(start, end);
+		for (size_t i = 0; i < CHANNEL_COUNT; i++)
+		{
+			auto start = Buffer.Read(i);
+			auto end = Buffer.Read(i);
+			last[i] = end;
+			ComputeInstruction(start, end);
+		}
 	}
 	break;
 	case 5:
@@ -237,6 +289,42 @@ void ReadSerial()
 	}
 }
 
+void AtExit()
+{
+	DebugStep();
+	USB.println("Program exitted due to an error");
+	USB.flush();
+}
+
+// the setup function runs once when you press reset or power the board
+void setup()
+{
+	atexit(AtExit);
+	USB.begin(115200);
+	pinMode(LED_BUILTIN, OUTPUT);
+	while (!USB)
+	{
+		digitalWrite(LED_BUILTIN, millis() % 500 < 250);
+	}
+
+	digitalWrite(LED_BUILTIN, LOW);
+	delay(100);
+	digitalWrite(LED_BUILTIN, HIGH);
+	delay(100);
+	digitalWrite(LED_BUILTIN, LOW);
+	delay(100);
+	digitalWrite(LED_BUILTIN, HIGH);
+	delay(100);
+	digitalWrite(LED_BUILTIN, LOW);
+
+	MStep.AttachDriver(Motor0);
+	MStep.AttachDriver(Motor1);
+	MStep.AttachCallback(&InstructionCallback);
+	USB.println(status);
+}
+
+
+
 // the loop function runs over and over again until power down or reset
 void loop()
 {
@@ -252,7 +340,6 @@ void loop()
 		Motor1->SetInstruction(new StepLinearDriverInstruction(speed, steps));
 		hit = 0;
 	}*/
-	ReadSerial();
 	
 	MStep.UpdateDrivers();
 }

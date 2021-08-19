@@ -47,14 +47,14 @@ namespace CameraRigController.Model
             }
         }
 
-        private int _stepsPerRervs;
+        private int _stepsPerRevs;
 
         public int StepsPerRevolution
         {
-            get => _stepsPerRervs;
+            get => _stepsPerRevs;
             set
             {
-                _stepsPerRervs = value;
+                _stepsPerRevs = value;
                 OnPropertyChanged(nameof(StepsPerRevolution));
             }
         }

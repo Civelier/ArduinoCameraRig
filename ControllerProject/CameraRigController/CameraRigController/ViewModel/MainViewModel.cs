@@ -69,7 +69,7 @@ namespace CameraRigController.ViewModel
         {
             var instance = sender as MainViewModel;
             instance.Filename = $"Filename: {instance.FileManager?.AnimFileInfo?.File.Name ?? ""}";
-            instance.NumberOfChannels = $"Number of channels: {instance.FileManager?.AnimFileInfo?.ChannelCount.ToString() ?? ""}";
+            instance.NumberOfAnnimationChannels = $"Number of annimation channels: {instance.FileManager?.AnimFileInfo?.ChannelCount.ToString() ?? ""}";
             instance.FPS = $"FPS: {instance.FileManager?.AnimFileInfo?.FPS.ToString() ?? ""}";
         }
 
@@ -88,15 +88,15 @@ namespace CameraRigController.ViewModel
 
 
 
-        public string NumberOfChannels
+        public string NumberOfAnnimationChannels
         {
-            get { return (string)GetValue(NumberOfChannelsProperty); }
-            set { SetValue(NumberOfChannelsProperty, value); }
+            get { return (string)GetValue(NumberOfAnnimationChannelsProperty); }
+            set { SetValue(NumberOfAnnimationChannelsProperty, value); }
         }
 
         // Using a DependencyProperty as the backing store for NumberOfChannels.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty NumberOfChannelsProperty =
-            DependencyProperty.Register("NumberOfChannels", typeof(string), typeof(MainViewModel), new PropertyMetadata("Number of channels:"));
+        public static readonly DependencyProperty NumberOfAnnimationChannelsProperty =
+            DependencyProperty.Register("NumberOfAnnimationChannels", typeof(string), typeof(MainViewModel), new PropertyMetadata("Number of annimation channels:"));
 
 
         public string FPS
@@ -134,12 +134,17 @@ namespace CameraRigController.ViewModel
         }
 
         public RelayCommand OpenFileCommand { get; set; }
+        /// <summary>
+        /// Command to call <see cref="Play"/>
+        /// </summary>
         public RelayCommand PlayCommand { get; set; }
         public RelayCommand RefreshPortsCommand { get; set; }
         public RelayCommand RadioChecked { get; set; }
         public RelayCommand CloseCommand { get; set; }
 
-
+        /// <summary>
+        /// Computes the channels and sends to the arduino using <see cref="ArduinoConnectionManager.Load(List{AnimChannel})"/>
+        /// </summary>
         void Play()
         {
             _connectionManager.Load(ComputeChannels().ToList());
@@ -195,17 +200,34 @@ namespace CameraRigController.ViewModel
         {
         }
 
+        /// <summary>
+        /// Computes the <see cref="RawKeyframe"/> from <see cref="FileManager"/> into <see cref="Keyframe"/> based on this motor channel's configuration.
+        /// </summary>
+        /// <param name="motorInfo">Information on the motor channel (from the UI model)</param>
+        /// <returns>An animation channel containing the converted information ready to be sent to the arduino.
+        /// Returns <see cref="null"/> if <see cref="FileManager"/> has not been properly openned.</returns>
         private AnimChannel ComputeChannel(MotorTabModel motorInfo)
         {
+            // If file manager failed to open or has not decoded the data yet, 
+            // exit the method.
             if (!FileManager.AnimFileInfo.HasValue) return null;
 
+            // Initialize some variables
             var fileInfo = FileManager.AnimFileInfo.Value;
             var keyframes = new List<Keyframe>();
+            
+            // Get the raw annimation channel for this specific motor channel
             var rawAnimChannel = fileInfo.Channels[motorInfo.AnnimationChannelID];
 
+            // Compute the raw keyframes to convert them into animation keyframes based on 
+            // this specific motor channel configuration.
             foreach (var kf in rawAnimChannel.Keyframes)
             {
+                // Get the keyframe's position in time in milliseconds.
                 UInt32 ms = (UInt32)(kf.Frame / fileInfo.FPS * 1000.0);
+
+                // Get the keyframe's position value in motor steps 
+                // (for the actual stepper motor).
                 Int32 value = (Int32)(kf.Value / (2.0 * Math.PI) * motorInfo.StepsPerRevolution * 16.0);
                 keyframes.Add(new Keyframe(ms, value));
             }

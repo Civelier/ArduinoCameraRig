@@ -1,4 +1,5 @@
 ﻿using CameraRigController.Model;
+using CameraRigController.Properties;
 using GalaSoft.MvvmLight;
 using System;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace CameraRigController.ViewModel
         public MotorTabsVM()
         {
             _tabs = new ObservableCollection<MotorTabVM>();
-            var count = 1;
+            var count = Settings.Default.MotorChannelCount;
             for (int i = 0; i < count; i++)
             {
                 Tabs.Add(new MotorTabVM() { Data = new MotorTabModel() 

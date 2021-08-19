@@ -54,7 +54,7 @@
             <GroupBox Header="Animation file" Margin="10,10,7,0">
                 <Canvas Margin="0,0,-2,-4">
                     <Label x:Name="FileNameLabel" Content="{Binding Main.Filename, Mode=TwoWay}" Width="321"/>
-                    <Label x:Name="ChannelNumberLabel" Content="{Binding Main.NumberOfChannels, Mode=TwoWay}" Height="26" Canvas.Top="26" Width="321"/>
+                    <Label x:Name="ChannelNumberLabel" Content="{Binding Main.NumberOfAnnimationChannels, Mode=TwoWay}" Height="26" Canvas.Top="26" Width="321"/>
                     <Label x:Name="FPSLabel" Content="{Binding Main.FPS, Mode=TwoWay}" Canvas.Top="52"/>
                 </Canvas>
             </GroupBox>
