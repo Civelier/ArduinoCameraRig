@@ -18,7 +18,7 @@ private:
     Keyframe m_end = Keyframe();
     TimeSync* m_sync = nullptr;
     bool m_firstRun = true;
-    SpeedBuffer m_buffer = SpeedBuffer(20);
+    SpeedBuffer m_buffer = SpeedBuffer(10);
     curve_t m_curve = nullptr;
     int32_t stepsLeft = 0;
     int32_t lastStep = 0;

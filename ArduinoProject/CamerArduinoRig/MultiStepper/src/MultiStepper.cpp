@@ -115,5 +115,10 @@ void MultiStepperClass::UpdateDrivers()
 	}
 }
 
+size_t MultiStepperClass::Count()
+{
+	return m_count;
+}
+
 
 MultiStepperClass MStep;

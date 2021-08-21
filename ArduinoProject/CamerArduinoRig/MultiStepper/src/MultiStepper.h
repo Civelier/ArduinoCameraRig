@@ -39,6 +39,8 @@ public:
 	void AttachCallback(instructionCB_t callback);
 	void AttachDriver(StepperDriver* driver);
 	void UpdateDrivers();
+
+	size_t Count();
 };
 
 extern MultiStepperClass MStep;
