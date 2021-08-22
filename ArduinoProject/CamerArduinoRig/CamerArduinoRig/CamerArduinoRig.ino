@@ -12,15 +12,18 @@
 #include "KeyframeInstruction.h"
 
 #define CHANNEL_COUNT 2
+#define BUFFERS_SIZE 100
+
+using smallSize_t = uint16_t;
 
 
-StepperDriver* Motor0 = new StepperDriver(200, 23, 22, 24, 25, 26);
-StepperDriver* Motor1 = new StepperDriver(200, 28, 27, 29, 30, 31);
 StepperDriver* Motors[CHANNEL_COUNT]
 {
-	Motor0,
-	Motor1,
+	new StepperDriver(200, 23, 22, 24, 25, 26),
+	new StepperDriver(200, 28, 27, 29, 30, 31),
 };
+
+
 
 enum class StatusCode : uint16_t
 {
@@ -29,6 +32,7 @@ enum class StatusCode : uint16_t
 	Done = 3,
 	Debug = 4,
 	ReadyForInstruction = 5,
+	Value = 6,
 	Error = 0b10000000,
 	MotorChannelOutOfRangeError = Error | 1,
 };
@@ -96,16 +100,17 @@ struct KeyframeBuffer
 struct CircularBuffer
 {
 	Keyframe* buffer;
-	size_t Count;
-	size_t Index;
-	size_t ReadIndices[CHANNEL_COUNT]{};
-	size_t Size;
+	smallSize_t Count;
+	smallSize_t Index;
+	smallSize_t ReadIndex;
+	smallSize_t Size;
 	CircularBuffer(size_t size)
 	{
 		buffer = (Keyframe*)malloc(size * sizeof(Keyframe));
 		Count = 0;
 		Index = 0;
 		Size = size;
+		ReadIndex = 0;
 	}
 
 	void Write(Keyframe kf)
@@ -113,93 +118,40 @@ struct CircularBuffer
 		buffer[Index] = kf;
 		//kf.Print();
 		Count = max(Count, Index + 1);
-		Index = (Index + 1) % Size;
+		Index = ++Index % Size;
 	}
 
 	int AvailableForWrite()
 	{
-		// Increment all channels to their next keyframe index (or if none, increment to write index)
-		for (size_t i = 0; i < CHANNEL_COUNT; i++)
-		{
-			IncrementToNextKeyframe(i);
-		}
-
-		/*
-		* Problem description:
-		* We want to know how many keyframes can be written to the buffer without overwriting unexecuted keyframes.
-		* 
-		* Index (write index): I
-		* ReadIndices[n]: n  (eg: 1 means ReadIndices[1])
-		* 
-		* Unexecuted keyframe: X
-		* Executed keyframe: H
-		* Empty: _
-		* 
-		* Possbility #1:
-		* H H H 1 0 H X 2 X X X X I _ _ _ _ _ _ _
-		* Size = 20
-		* Index = 12
-		* ReadIndices = { 4, 3, 7 }
-		* 
-		* AvailableToWrite() = 11
-		* 
-		* <I to end> + <Start to closest read index> =
-		* I to end = Size - Index = 8
-		* 
-		* Min ReadIndex = 3
-		* Start to closest read index = 3
-		* So:
-		* AvailableToWrite() = 8 + 3 = 11
-		* 
-		* Possibility
-		* 
-		*/
-		size_t minReadIndex{ Count };
-		for (size_t i = 0; i < CHANNEL_COUNT; i++)
-		{
-			minReadIndex = min(minReadIndex, ReadIndices[i]);
-		}
-
-
-		if (Index < minReadIndex) return minReadIndex - Index;
+		if (Index >= ReadIndex) return Size - Index + ReadIndex;
+		return  ReadIndex - Index;
 	}
 
-	int Available(uint16_t channelID)
+	int Available()
 	{
-		
-		if (Index >= ReadIndices[channelID]) return Index - ReadIndices[channelID];
-		return Count - ReadIndices[channelID] + Index;
+		/*
+		* When Index (I) is in front of ReadIndex (R) available (+) is the difference between the two
+		* ***R+++I*
+		*/
+		if (Index >= ReadIndex) return Index - ReadIndex;
+		/*
+		* Otherwise the remainder (Count - ReadIndex) plus what Index has written
+		* +++I***R+
+		*/
+		return Count - ReadIndex + Index;
 	}
 
 	void Clear()
 	{
 		Count = 0;
-		for (size_t i = 0; i < CHANNEL_COUNT; i++)
-		{
-			ReadIndices[i] = 0;
-		}
+		ReadIndex = 0;
 		Index = 0;
 	}
 
-	void IncrementToNextKeyframe(uint16_t channelID)
+	Keyframe Read()
 	{
-		while (ReadIndices[channelID] < Index)
-		{
-			if (buffer[ReadIndices[channelID]].ChannelID == channelID) break;
-			ReadIndices[channelID] = (ReadIndices[channelID] + 1) % Size;
-		}
-	}
-
-	Keyframe Read(uint16_t channelID)
-	{
-		IncrementToNextKeyframe(channelID);
-		Keyframe kf = buffer[ReadIndices[channelID]];
-		//kf.Print();
-		while (ReadIndices[channelID] < Index)
-		{
-			ReadIndices[channelID] = (ReadIndices[channelID] + 1) % Size;
-			if (buffer[ReadIndices[channelID]].ChannelID == channelID) break;
-		}
+		Keyframe kf = buffer[ReadIndex];
+		ReadIndex = ++ReadIndex % Size;
 		return kf;
 	}
 
@@ -219,10 +171,31 @@ struct CircularBuffer
 #define PrintErrorStep(message) DebugStep(); USB.print("Error at line <"); USB.print(__LINE__); USB.print(">: ")
 
 StatusCode status = StatusCode::Ready;
-CircularBuffer Buffer = CircularBuffer(500);
+CircularBuffer Buffers[] =
+{
+	CircularBuffer(BUFFERS_SIZE),
+	CircularBuffer(BUFFERS_SIZE),
+};
+
+
 Keyframe last[CHANNEL_COUNT]{};
 TimeSync* sync = new TimeSync();
 bool Running = false;
+bool IsDone[CHANNEL_COUNT]{};
+
+CircularBuffer& GetBuffer(uint16_t channelID)
+{
+	if (channelID < CHANNEL_COUNT)
+	{
+		return Buffers[channelID];
+	}
+	PrintErrorStep();
+	USB.print("Attempt to get a buffer from an undefined channel ID <id: ");
+	USB.print(channelID);
+	USB.println(">");
+	USB.flush();
+	exit(EXIT_FAILURE);
+}
 
 StepperDriver* GetMotor(uint16_t channelID)
 {
@@ -262,25 +235,36 @@ void ComputeInstruction(Keyframe start, Keyframe end)
 
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 {
+	auto buffer = GetBuffer(channelID);
 	if (!sync->Started) return;
 	//if (result == DriverInstructionResult::Done) DBGValue(Buffer.Available());
-	if (!Buffer.Available(channelID) && Running && result == DriverInstructionResult::Done)
+	if (!buffer.Available() && Running && result == DriverInstructionResult::Done)
 	{
+		IsDone[channelID] = true;
+		for (size_t i = 0; i < CHANNEL_COUNT; i++)
+		{
+			if (!IsDone[i]) return;
+		}
 		Running = false;
 		status = StatusCode::Ready;
 		USB.println((uint16_t)StatusCode::Done);
 		//Serial.println(StatusCode::Debug);
 		//Serial.println("Done");
-		Buffer.Clear();
+		buffer.Clear();
 		sync->Stop();
 		//Motor1->SetInstruction(nullptr);
 		return;
 	}
 	if (result == DriverInstructionResult::Done)
 	{
-		auto kf = Buffer.Read(channelID);
+		auto kf = buffer.Read();
 		ComputeInstruction(last[channelID], kf);
 		last[channelID] = kf;
+		if (buffer.AvailableForWrite() > (buffer.Size / 2))
+		{
+			USB.println((uint16_t)StatusCode::ReadyForInstruction);
+			USB.println(channelID);
+		}
 		//Serial.println(StatusCode::ReadyForInstruction);
 	}
 	
@@ -312,8 +296,8 @@ void serialEvent()
 		Running = true;
 		for (size_t i = 0; i < CHANNEL_COUNT; i++)
 		{
-			auto start = Buffer.Read(i);
-			auto end = Buffer.Read(i);
+			auto start = Buffers[i].Read();
+			auto end = Buffers[i].Read();
 			last[i] = end;
 			ComputeInstruction(start, end);
 		}
@@ -330,9 +314,23 @@ void serialEvent()
 		uint16_t id = USB.parseInt();
 		uint32_t ms = USB.parseInt();
 		uint32_t steps = USB.parseInt();
-		Buffer.Write(Keyframe{ id, ms, steps });
+		GetBuffer(id).Write(Keyframe{ id, ms, steps });
 	}
 	break;
+	case 8: // Request available for write on specific buffer
+	{
+		int channelID = USB.parseInt();
+		USB.print((uint16_t)StatusCode::Value);
+		USB.print(' ');
+		USB.println(GetBuffer(channelID).AvailableForWrite());
+		USB.flush();
+		/*DebugStep();
+		USB.print("Requested for buffer length of 'channel ");
+		USB.print(channelID);
+		USB.print("' = ");
+		USB.println(GetBuffer(channelID).AvailableForWrite());*/
+	}
+		break;
 	default:
 		break;
 	}
@@ -345,29 +343,34 @@ void AtExit()
 	USB.flush();
 }
 
+
 // the setup function runs once when you press reset or power the board
 void setup()
 {
 	atexit(AtExit);
 	USB.begin(115200);
+
 	pinMode(LED_BUILTIN, OUTPUT);
 	while (!USB)
 	{
 		digitalWrite(LED_BUILTIN, millis() % 500 < 250);
 	}
 
-	digitalWrite(LED_BUILTIN, LOW);
-	delay(100);
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(100);
-	digitalWrite(LED_BUILTIN, LOW);
-	delay(100);
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(100);
-	digitalWrite(LED_BUILTIN, LOW);
 
-	MStep.AttachDriver(Motor0);
-	MStep.AttachDriver(Motor1);
+	digitalWrite(LED_BUILTIN, LOW);
+	delay(100);
+	digitalWrite(LED_BUILTIN, HIGH);
+	delay(100);
+	digitalWrite(LED_BUILTIN, LOW);
+	delay(100);
+	digitalWrite(LED_BUILTIN, HIGH);
+	delay(100);
+	digitalWrite(LED_BUILTIN, LOW);
+	for (size_t i = 0; i < CHANNEL_COUNT; i++)
+	{
+		MStep.AttachDriver(Motors[i]);
+	}
+
 	MStep.AttachCallback(&InstructionCallback);
 	USB.println((uint16_t)status);
 }

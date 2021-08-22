@@ -15,6 +15,7 @@ namespace CameraRigController
         Done =      3,
         Debug =     4,
         ReadyForInstruction = 5,
+        Value = 6,
         Error =     0b10000000,
         SpecificError = Error | 1,
     }
@@ -50,6 +51,11 @@ namespace CameraRigController
         {
             Command = command;
             Arguments = arguments.ToArray();
+        }
+
+        public static ArduinoSendRequestPacket BufferAvailableToWriteRequest(UInt16 channelID)
+        {
+            return new ArduinoSendRequestPacket(8, channelID.ToString());
         }
 
         public override string ToString()
@@ -100,10 +106,11 @@ namespace CameraRigController
         public readonly string Data;
         public ArduinoRecievePacket(string packet)
         {
-            if (int.TryParse(packet, out int s))
+            var i = packet.IndexOf(' ');
+            if (int.TryParse(i == -1 ? packet : packet.Substring(0, i + 1), out int s))
             {
                 Status = (ArduinoStatusCode)s;
-                Data = "";
+                Data = packet.Length >= i + 1  ? packet.Substring(i + 1) : "";
             }
             else
             {

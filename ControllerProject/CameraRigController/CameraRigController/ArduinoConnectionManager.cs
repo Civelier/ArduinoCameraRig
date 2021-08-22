@@ -173,6 +173,35 @@ namespace CameraRigController
             return new ArduinoRecievePacket(res).Status;
         }
 
+        /// <summary>
+        /// Send a request for the available length of the buffer to write
+        /// </summary>
+        /// <param name="channelID">Arduino keyframe buffer (motor) channelID</param>
+        /// <returns>The number of keyframes that can be written.
+        /// Returns null if invalid value or </returns>
+        private int? SendBufferAvailableForWriteRequest(UInt16 channelID)
+        {
+            _newPacket = false;
+            SendDataPacket(ArduinoSendRequestPacket.BufferAvailableToWriteRequest(channelID).ToString());
+            while (!_abort && _run)
+            {
+                if (_newPacket)
+                {
+                    if (_lastPacket.Status == ArduinoStatusCode.Value)
+                    {
+                        if (int.TryParse(_lastPacket.Data, out int count))
+                        {
+                            _newPacket = false;
+                            return count;
+                        }
+                        return null;
+                    }
+                }
+                Thread.Sleep(100);
+            }
+            return null;
+        }
+
         private void SendFirstKeyframeData(Keyframe keyframe, int id)
         {
             SendDataPacket(new ArduinoSendKeyframePacket((ushort)id, 0, keyframe.Value).ToString());
@@ -253,24 +282,21 @@ namespace CameraRigController
                         //var status = SendStatusRequest();
                         //if (status == ArduinoStatusCode.Ready)
                         //{
-                        int size = 0;
-                        foreach (var channel in _data)
-                        {
-                            size += channel.Keyframes.Count;
-                        }
-                        var keyframeInfos = new List<KeyframeInfo>(size);
+                        var keyframeInfos = new List<Queue<KeyframeInfo>>(Settings.Default.MotorChannelCount);
 
                         foreach (var channel in _data)
                         {
+                            var infos = new List<KeyframeInfo>(channel.Keyframes.Count);
                             foreach (var keyframe in channel.Keyframes)
                             {
-                                keyframeInfos.Add(new KeyframeInfo(keyframe, channel.MotorInfo.MotorChannelID));
+                                infos.Add(new KeyframeInfo(keyframe, channel.MotorInfo.MotorChannelID));
                             }
+                            infos.Sort();
+                            Debug.WriteLine($"Buffer[{channel.MotorInfo.MotorChannelID}] length: {infos.Count}");
+                            keyframeInfos.Add(new Queue<KeyframeInfo>(infos));
                         }
 
-
-                        keyframeInfos.Sort();
-                        Debug.WriteLine($"Buffer length: {keyframeInfos.Count}");
+                        //Debug.WriteLine($"Buffer length: {keyframeInfos.Count}");
                         foreach (var channel in _data)
                         {
                             SendFirstKeyframeData(channel.Keyframes.FirstOrDefault(), channel.MotorInfo.MotorChannelID);
@@ -278,13 +304,90 @@ namespace CameraRigController
                             if (!_run) break;
                             if (_abort) return;
                         }
-                        foreach (var keyframeInfo in keyframeInfos)
+
+
+                        var bufferAvailable = new int[Settings.Default.MotorChannelCount];
+                        // Get buffer sizes
+                        for (int i = 0; i < Settings.Default.MotorChannelCount; i++)
                         {
-                            SendKeyframeData(keyframeInfo.Keyframe, keyframeInfo.MotorChannelID);
-                            Thread.Sleep(1);
+                            var count = SendBufferAvailableForWriteRequest((UInt16)i);
+                            if (count.HasValue)
+                            {
+                                bufferAvailable[i] = count.Value;
+                            }
                             if (!_run) break;
                             if (_abort) return;
                         }
+                        bool firstRun = true; // To send the start command to the arduino
+                        while (!_abort && _run)
+                        {
+                            // If all queues are empty, then upload is complete
+                            if (keyframeInfos.All((q) => q.Count == 0)) break;
+
+                            // Send keyframes to buffers
+                            for (int i = 0; i < keyframeInfos.Count; i++)
+                            {
+                                var infos = keyframeInfos[i];
+
+                                // Verify if there is still data to be sent on this channel
+                                if (infos.Count <= 0) break;
+
+                                // Keep track of the buffer's available length
+                                for (; bufferAvailable[i] > 0; bufferAvailable[i]--)
+                                {
+                                    if (infos.Count == 0) break;
+                                    // Send next keyframe
+                                    var info = infos.Dequeue();
+                                    SendKeyframeData(info.Keyframe, info.MotorChannelID);
+                                    Thread.Sleep(1);
+
+                                    // Ensure that if execution needs to stop, it can exit
+                                    if (!_run) break;
+                                    if (_abort) return;
+                                }
+                            }
+
+                            if (!_run) break;
+                            if (_abort) return;
+
+                            if (firstRun) // Send the start command on first run
+                            {
+                                SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
+                                firstRun = false;
+                            }
+
+                            // Wait for either 'Done' or 'ReadyForInstruction' status from arduino
+                            while (!_abort && _run)
+                            {
+                                if (_newPacket)
+                                {
+                                    if (_lastPacket.Status == ArduinoStatusCode.Done)
+                                    {
+                                        _newPacket = false;
+                                        break;
+                                    }
+                                    if (_lastPacket.Status == ArduinoStatusCode.ReadyForInstruction)
+                                    {
+                                        _newPacket = false;
+                                        if (UInt16.TryParse(_lastPacket.Data, out UInt16 channelID))
+                                        {
+                                            if (channelID >= 0 && channelID < Settings.Default.MotorChannelCount)
+                                            {
+                                                var count = SendBufferAvailableForWriteRequest(channelID);
+                                                if (count.HasValue)
+                                                {
+                                                    bufferAvailable[channelID] = count.Value;
+                                                }
+                                                else if (_run && !_abort) throw new Exception("Possible communication error");
+                                            }
+                                            else throw new Exception($"ChannelID was out of range: {channelID}");
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
                         
                         if (!_run) break;
                         if (_abort) return;
@@ -294,13 +397,27 @@ namespace CameraRigController
                         //{
                         //FlushBuffer();
                         //}
-                        SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
+                        
                         //while (status != ArduinoStatusCode.Done && !_abort)
                         //{
                         //    Thread.Sleep(1000);
                         //    status = SendStatusRequest();
                         //}
                         Debug.WriteLine("Upload complete");
+
+                        while (_run && !_abort)
+                        {
+                            if (_newPacket)
+                            {
+                                if (_lastPacket.Status == ArduinoStatusCode.Done)
+                                {
+                                    Debug.WriteLine("Playback complete");
+                                    Port.Dispose();
+                                    break;
+                                }
+                            }
+                        }
+
                         _run = false;
                         //while (!_abort)
                         //{
