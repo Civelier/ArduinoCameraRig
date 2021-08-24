@@ -237,6 +237,52 @@ DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver
             float sps = (1.0f / m_buffer.AverageSpeed()) * 1000000.0f;// *(float)deltaStep;
             //DBGValue(sps);
 			MicroStep ms = driver->LogDistribution.MicroStepForSpeed(sps);
+
+            //if (ms != lastStepSize)
+            //{
+            //    MSTEP_DEBUG_STREAM.println(4);
+            //    MSTEP_DEBUG_STREAM.print("Channel: ");
+            //    MSTEP_DEBUG_STREAM.print(m_start.ChannelID);
+            //    MSTEP_DEBUG_STREAM.print(" channged stepping to: ");
+            //    switch (ms)
+            //    {
+            //    case MicroStep::MSStep:
+            //        MSTEP_DEBUG_STREAM.println("Full step");
+            //        break;
+            //    case MicroStep::MSHalf:
+            //        MSTEP_DEBUG_STREAM.println("Half step");
+            //        break;
+            //    case MicroStep::MSQuarter:
+            //        MSTEP_DEBUG_STREAM.println("Quarter step");
+            //        break;
+            //    case MicroStep::MSEighth:
+            //        MSTEP_DEBUG_STREAM.println("Eighth step");
+            //        break;
+            //    case MicroStep::MSSixteenth:
+            //        MSTEP_DEBUG_STREAM.println("Sixteenth step");
+            //        break;
+            //    default:
+            //        break;
+            //    }
+
+            //    // Stepping up to the next step size
+            //    
+            //    /*
+            //    * From 1/16 to 1/1 step
+            //    * Microstep 14 + 1/8 step
+            //    * 
+            //    */
+
+            //    const int v1 = 0b10000;
+
+            //    int32_t stepUp{ stepsLeft % 16 }; // How many microsteps 
+
+
+            //    lastStepSize = ms;
+            //}
+
+
+
             //DBGValue(ms);
             //DBGValue(stepsLeft);
 			/*if (ms != lastStep)

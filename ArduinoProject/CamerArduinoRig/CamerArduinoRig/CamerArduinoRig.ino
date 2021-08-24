@@ -257,7 +257,7 @@ StepperDriver* GetMotor(uint16_t channelID)
 void ComputeInstruction(Keyframe start, Keyframe end)
 {
 	auto motor = GetMotor(start.ChannelID);
-	motor->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &LinearCurve));
+	motor->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &QuadraticInOutCurve));
 }
 
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)

@@ -13,6 +13,7 @@ private:
     uint32_t nextPulse = 0;
     uint32_t pulseDelay = 0;
     int32_t steps = 0;
+    MicroStep lastStepSize = MicroStep::MSStep;
     bool dir = false;
     Keyframe m_start = Keyframe();
     Keyframe m_end = Keyframe();
