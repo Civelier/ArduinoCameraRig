@@ -16,6 +16,8 @@ namespace CameraRigController
         Debug =     4,
         ReadyForInstruction = 5,
         Value = 6,
+        DebugBlockBegin = 7,
+        DebugBlockEnd = 8,
         Error =     0b10000000,
         SpecificError = Error | 1,
     }
@@ -56,6 +58,11 @@ namespace CameraRigController
         public static ArduinoSendRequestPacket BufferAvailableToWriteRequest(UInt16 channelID)
         {
             return new ArduinoSendRequestPacket(8, channelID.ToString());
+        }
+
+        public static ArduinoSendRequestPacket BufferDoneRequest(UInt16 channelID)
+        {
+            return new ArduinoSendRequestPacket(11, channelID.ToString());
         }
 
         public override string ToString()

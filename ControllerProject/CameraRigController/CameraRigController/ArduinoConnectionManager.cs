@@ -34,6 +34,7 @@ namespace CameraRigController
         private bool _running;
         private StringBuilder _buffer = new StringBuilder();
         private string _comPort;
+        private bool _debugging = false;
 
         public ArduinoConnectionManager()
         {
@@ -47,15 +48,27 @@ namespace CameraRigController
             {
                 var s = Port.ReadLine();
                 var status = new ArduinoRecievePacket(s);
-                if (status.Status == ArduinoStatusCode.Debug)
+                switch (status.Status)
                 {
-                    Debug.Write("<Arduino debug> ");
-                    Debug.WriteLine(Port.ReadLine());
-                }
-                else
-                {
-                    _lastPacket = status;
-                    _newPacket = true;
+                    case ArduinoStatusCode.Debug:
+                        Debug.Write("<Arduino debug> ");
+                        Debug.WriteLine(Port.ReadLine());
+                        break;
+                    case ArduinoStatusCode.DebugBlockBegin:
+                        _debugging = true;
+                        while (true)
+                        {
+                            var line = Port.ReadLine();
+                            if (int.TryParse(line, out int code))
+                            {
+                                if (code == (int)ArduinoStatusCode.DebugBlockEnd) return;
+                            }
+                            Debug.WriteLine(line);
+                        }
+                    default:
+                        _lastPacket = status;
+                        _newPacket = true;
+                        break;
                 }
             }
             catch (IOException ex)
@@ -200,6 +213,11 @@ namespace CameraRigController
                 Thread.Sleep(100);
             }
             return null;
+        }
+
+        private void SendEndOfBufferRequest(UInt16 channelID)
+        {
+            SendDataPacket(ArduinoSendRequestPacket.BufferDoneRequest(channelID).ToString());
         }
 
         private void SendFirstKeyframeData(Keyframe keyframe, int id)
@@ -373,6 +391,11 @@ namespace CameraRigController
                                         {
                                             if (channelID >= 0 && channelID < Settings.Default.MotorChannelCount)
                                             {
+                                                if (keyframeInfos[channelID].Count <= 0)
+                                                {
+                                                    SendEndOfBufferRequest(channelID);
+                                                    break;
+                                                }
                                                 var count = SendBufferAvailableForWriteRequest(channelID);
                                                 if (count.HasValue)
                                                 {

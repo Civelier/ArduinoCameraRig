@@ -6,6 +6,7 @@
 */
 
 #include "MultiStepper.h"
+#include "DebugTools.h"
 
 MultiStepperClass::MultiStepperClass()
 {
@@ -19,11 +20,13 @@ MultiStepperClass::MultiStepperClass()
 
 void MultiStepperClass::AttachCallback(instructionCB_t callback)
 {
+	DebugToolsFunctionBegin();
 	m_callback = callback;
 }
 
 void MultiStepperClass::AttachDriver(StepperDriver* driver)
 {
+	DebugToolsFunctionBegin();
 #ifdef MSTEP_DEBUG
 	MSTEP_DEBUG_STREAM.print("Attaching Driver: ");
 	MSTEP_DEBUG_STREAM.print(this->m_count);
@@ -53,6 +56,9 @@ void MultiStepperClass::AttachDriver(StepperDriver* driver)
 
 void MultiStepperClass::UpdateDrivers()
 {
+	DebugToolsFunctionBegin();
+	DebugToolsStep("Before for loop");
+
 #ifdef MSTEP_DEBUG
 	static int hit = 0;
 	static uint32_t nextWakeup = 0;
@@ -71,10 +77,12 @@ void MultiStepperClass::UpdateDrivers()
 	}
 #endif // MSTEP_DEBUG
 
+
 	for (size_t i = 0; i < m_count; i++)
 	{
 		if (m_drivers[i] == nullptr)
 		{
+			DebugToolsStep("Driver was null");
 #ifndef MSTEP_DEBUG
 			MSTEP_DEBUG_STREAM.println(4);
 #endif
@@ -86,6 +94,7 @@ void MultiStepperClass::UpdateDrivers()
 		}
 		if (m_drivers[i]->Instruction != nullptr)
 		{
+			DebugToolsStep("Driver instruction not null");
 #ifdef MSTEP_DEBUG
 			static bool status[MSTEP_MAX_COUNT]{};
 			if (!status[i])
@@ -98,16 +107,25 @@ void MultiStepperClass::UpdateDrivers()
 			}
 #endif
 			auto result = m_drivers[i]->Instruction->Execute(m_drivers[i]);
-			if (result == DriverInstructionResult::Done) m_drivers[i]->SetInstruction(nullptr);
+			if (result == DriverInstructionResult::Done)
+			{
+				DebugToolsStep("Driver instruction set null");
+				m_drivers[i]->SetInstruction(nullptr);
+			}
 			if (m_callback != nullptr)
 			{
+				DebugToolsStep("Invoking callback");
 				m_callback(i, result);
+				DebugToolsStep("After callback");
 #ifdef MSTEP_DEBUG
-				MSTEP_DEBUG_STREAM.print("Driver '");
-				MSTEP_DEBUG_STREAM.print(i);
-				MSTEP_DEBUG_STREAM.println("' completed an instruction!");
-				MSTEP_DEBUG_STREAM.flush();
-				status[i] = 0;
+				if (result == DriverInstructionResult::Done)
+				{
+					MSTEP_DEBUG_STREAM.print("Driver '");
+					MSTEP_DEBUG_STREAM.print(i);
+					MSTEP_DEBUG_STREAM.println("' completed an instruction!");
+					MSTEP_DEBUG_STREAM.flush();
+					status[i] = 0;
+				}
 #endif // MSTEP_DEBUG
 
 			}

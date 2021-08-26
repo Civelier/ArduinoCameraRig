@@ -10,9 +10,15 @@
 #include "MultiStepper.h"
 #include "Keyframe.h"
 #include "KeyframeInstruction.h"
+#include "DebugTools.h"
+
+#ifndef max
+#define max(x,y) (x > y ? x : y)
+#endif // !max
+
 
 #define CHANNEL_COUNT 2
-#define BUFFERS_SIZE 100
+#define BUFFERS_SIZE 50
 
 using smallSize_t = uint16_t;
 
@@ -33,6 +39,8 @@ enum class StatusCode : uint16_t
 	Debug = 4,
 	ReadyForInstruction = 5,
 	Value = 6,
+	DebugBlockBegin = 7,
+	DebugBlockEnd = 8,
 	Error = 0b10000000,
 	MotorChannelOutOfRangeError = Error | 1,
 };
@@ -106,29 +114,32 @@ struct CircularBuffer
 	smallSize_t Size;
 	CircularBuffer(size_t size)
 	{
-		buffer = (Keyframe*)malloc(size * sizeof(Keyframe));
+		buffer = new Keyframe[size]{};
 		Count = 0;
 		Index = 0;
-		Size = size;
 		ReadIndex = 0;
+		Size = size;
 	}
 
-	void Write(Keyframe kf)
+	void Write(const Keyframe& kf)
 	{
+		DebugToolsFunctionBegin();
 		buffer[Index] = kf;
 		//kf.Print();
 		Count = max(Count, Index + 1);
-		Index = ++Index % Size;
+		Index = (Index + 1) % Size;
 	}
 
 	int AvailableForWrite()
 	{
+		DebugToolsFunctionBegin();
 		if (Index >= ReadIndex) return Size - Index + ReadIndex;
 		return  ReadIndex - Index;
 	}
 
 	int Available()
 	{
+		DebugToolsFunctionBegin();
 		/*
 		* When Index (I) is in front of ReadIndex (R) available (+) is the difference between the two
 		* ***R+++I*
@@ -143,21 +154,23 @@ struct CircularBuffer
 
 	void Clear()
 	{
+		DebugToolsFunctionBegin();
 		Count = 0;
 		ReadIndex = 0;
 		Index = 0;
 	}
 
-	Keyframe Read()
+	Keyframe& Read()
 	{
+		DebugToolsFunctionBegin();
 		Keyframe kf = buffer[ReadIndex];
-		ReadIndex = ++ReadIndex % Size;
+		ReadIndex = (ReadIndex + 1) % Size;
 		return kf;
 	}
 
 	~CircularBuffer()
 	{
-		free(buffer);
+		delete[](buffer);
 	}
 };
 
@@ -166,6 +179,10 @@ struct CircularBuffer
 
 
 #define DebugValue(value) DebugStep(); USB.print(#value); USB.print(" = "); USB.println(value); USB.flush()
+
+#define DebugBegin() USB.println((uint16_t)StatusCode::DebugBlockBegin)
+
+#define DebugEnd() USB.println((uint16_t)StatusCode::DebugBlockEnd)
 
 //Use before printing an error message. This is ONLY valid for the next line of text printed.
 #define PrintErrorStep(message) DebugStep(); USB.print("Error at line <"); USB.print(__LINE__); USB.print(">: ")
@@ -182,12 +199,14 @@ Keyframe last[CHANNEL_COUNT]{};
 TimeSync* sync = new TimeSync();
 bool Running = false;
 bool IsDone[CHANNEL_COUNT]{};
+uint32_t NextInstructionRequestTime[CHANNEL_COUNT]{};
 
-CircularBuffer& GetBuffer(uint16_t channelID)
+CircularBuffer* GetBuffer(uint16_t channelID)
 {
+	DebugToolsFunctionBegin();
 	if (channelID < CHANNEL_COUNT)
 	{
-		return Buffers[channelID];
+		return &Buffers[channelID];
 	}
 	PrintErrorStep();
 	USB.print("Attempt to get a buffer from an undefined channel ID <id: ");
@@ -199,6 +218,7 @@ CircularBuffer& GetBuffer(uint16_t channelID)
 
 StepperDriver* GetMotor(uint16_t channelID)
 {
+	DebugToolsFunctionBegin();
 	if (channelID < CHANNEL_COUNT)
 	{
 		return Motors[channelID];
@@ -208,7 +228,7 @@ StepperDriver* GetMotor(uint16_t channelID)
 	USB.print(channelID);
 	USB.println(">");
 	USB.flush();
-	exit(EXIT_FAILURE);
+	//exit(EXIT_FAILURE);
 	return nullptr;
 	/*switch (channelID)
 	{
@@ -227,51 +247,71 @@ StepperDriver* GetMotor(uint16_t channelID)
 	}*/
 }
 
-void ComputeInstruction(Keyframe start, Keyframe end)
+void ComputeInstruction(const Keyframe& start, const Keyframe& end)
 {
+	DebugToolsFunctionBegin();
 	auto motor = GetMotor(start.ChannelID);
+	if (!motor) return;
 	motor->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &LinearCurve));
 }
 
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 {
+	DebugToolsFunctionBegin();
+	if (!Running) return;
 	auto buffer = GetBuffer(channelID);
 	if (!sync->Started) return;
 	//if (result == DriverInstructionResult::Done) DBGValue(Buffer.Available());
-	if (!buffer.Available() && Running && result == DriverInstructionResult::Done)
+	if (!buffer->Available() && result == DriverInstructionResult::Done)
 	{
-		IsDone[channelID] = true;
-		for (size_t i = 0; i < CHANNEL_COUNT; i++)
-		{
-			if (!IsDone[i]) return;
-		}
-		Running = false;
-		status = StatusCode::Ready;
-		USB.println((uint16_t)StatusCode::Done);
-		//Serial.println(StatusCode::Debug);
-		//Serial.println("Done");
-		buffer.Clear();
-		sync->Stop();
-		//Motor1->SetInstruction(nullptr);
+		DebugStep();
+		USB.print("Channel '");
+		USB.print(channelID);
+		USB.println("' is done!");
+		USB.flush();
 		return;
 	}
-	if (result == DriverInstructionResult::Done)
+	
+	if (buffer->Available() && result == DriverInstructionResult::Done)
 	{
-		auto kf = buffer.Read();
+		DebugToolsStep("New instruction");
+		/*DebugStep();
+		USB.print("New instruction for channel: ");
+		USB.println(channelID);
+		USB.flush();*/
+		auto kf = buffer->Read();
 		ComputeInstruction(last[channelID], kf);
 		last[channelID] = kf;
-		if (buffer.AvailableForWrite() > (buffer.Size / 2))
+		if (buffer->AvailableForWrite() > (buffer->Size / 2) && NextInstructionRequestTime[channelID] < millis())
 		{
-			USB.println((uint16_t)StatusCode::ReadyForInstruction);
+			USB.print((uint16_t)StatusCode::ReadyForInstruction);
+			USB.print(' ');
 			USB.println(channelID);
+			USB.flush();
+			NextInstructionRequestTime[channelID] = millis() + 1500;
 		}
 		//Serial.println(StatusCode::ReadyForInstruction);
 	}
-	
+	for (size_t i = 0; i < CHANNEL_COUNT; i++)
+	{
+		if (!IsDone[i]) return;
+		auto buff = GetBuffer(i);
+		if (buff && buff->Available()) return;
+	}
+	Running = false;
+	status = StatusCode::Ready;
+	USB.println((uint16_t)StatusCode::Done);
+	//Serial.println(StatusCode::Debug);
+	//Serial.println("Done");
+	buffer->Clear();
+	sync->Stop();
+	//Motor1->SetInstruction(nullptr);
+	return;
 }
 
 void serialEvent()
 {
+	DebugToolsFunctionBegin();
 	int cmd = USB.parseInt();
 	switch (cmd)
 	{
@@ -314,7 +354,7 @@ void serialEvent()
 		uint16_t id = USB.parseInt();
 		uint32_t ms = USB.parseInt();
 		uint32_t steps = USB.parseInt();
-		GetBuffer(id).Write(Keyframe{ id, ms, steps });
+		GetBuffer(id)->Write(Keyframe{ id, ms, steps });
 	}
 	break;
 	case 8: // Request available for write on specific buffer
@@ -322,7 +362,7 @@ void serialEvent()
 		int channelID = USB.parseInt();
 		USB.print((uint16_t)StatusCode::Value);
 		USB.print(' ');
-		USB.println(GetBuffer(channelID).AvailableForWrite());
+		USB.println(GetBuffer(channelID)->AvailableForWrite());
 		USB.flush();
 		/*DebugStep();
 		USB.print("Requested for buffer length of 'channel ");
@@ -331,6 +371,33 @@ void serialEvent()
 		USB.println(GetBuffer(channelID).AvailableForWrite());*/
 	}
 		break;
+	case 9: // Request available to read on specific buffer
+	{
+		int channelID = USB.parseInt();
+		USB.print((uint16_t)StatusCode::Value);
+		USB.print(' ');
+		USB.println(GetBuffer(channelID)->Available());
+		USB.flush();
+	}
+		break;
+	case 10: // Request to print a keyframe from specific buffer at index
+	{
+		int channelID = USB.parseInt();
+		int index = USB.parseInt();
+		DebugStep();
+		USB.print("Channel: ");
+		USB.print(channelID);
+		USB.print(" Index: ");
+		USB.print(index);
+		USB.print(" Keyframe: ");
+		GetBuffer(channelID)->buffer[index].Print();
+	}
+		break;
+	case 11: // Instruct that the specific channel is done recieving keyframes
+	{
+		int channelID = USB.parseInt();
+		IsDone[channelID] = true;
+	}
 	default:
 		break;
 	}
@@ -350,21 +417,39 @@ void setup()
 	atexit(AtExit);
 	USB.begin(115200);
 
+	DebugTools.SetDebugOutput(&USB);
+
+	if (DebugTools.WasLastResetFromWatchdog())
+	{
+		DebugBegin();
+		DebugTools.PrintDebugInfo();
+		USB.println();
+		DebugTools.PrintStack();
+		DebugEnd();
+	}
+
+	DebugTools.SetupWatchdog(3000);
+
 	pinMode(LED_BUILTIN, OUTPUT);
 	while (!USB)
 	{
+		DebugToolsStep("Waiting for usb connection");
 		digitalWrite(LED_BUILTIN, millis() % 500 < 250);
 	}
 
-
+	DebugToolsStep("Flashing LED");
 	digitalWrite(LED_BUILTIN, LOW);
 	delay(100);
+	DebugToolsStep("Flashing LED");
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(100);
+	DebugToolsStep("Flashing LED");
 	digitalWrite(LED_BUILTIN, LOW);
 	delay(100);
+	DebugToolsStep("Flashing LED");
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(100);
+	DebugToolsStep("Flashing LED");
 	digitalWrite(LED_BUILTIN, LOW);
 	for (size_t i = 0; i < CHANNEL_COUNT; i++)
 	{
@@ -373,6 +458,7 @@ void setup()
 
 	MStep.AttachCallback(&InstructionCallback);
 	USB.println((uint16_t)status);
+	DebugToolsStep("End of setup");
 }
 
 
@@ -380,6 +466,10 @@ void setup()
 // the loop function runs over and over again until power down or reset
 void loop()
 {
+	DebugToolsFunctionBegin();
+
+	DebugToolsStep("Loop update");
+
 	/*static int hit = 0;
 	if (hit++ == 500 && Serial.available())
 	{
@@ -392,11 +482,12 @@ void loop()
 		Motor1->SetInstruction(new StepLinearDriverInstruction(speed, steps));
 		hit = 0;
 	}*/
+
 	
 	MStep.UpdateDrivers();
 }
 
 /*
-7 0 0 0 7 0 1500 0 7 0 5670 442 7 0 14429 -344 7 0 19434 0 4
+7 0 0 0 7 1 0 0 7 0 1500 0 7 1 1500 0 7 0 5670 442 7 1 5670 442 7 0 14429 -344 7 1 14429 -344 7 0 19434 0 7 1 19434 0 4 11 0 11 1
 */
 

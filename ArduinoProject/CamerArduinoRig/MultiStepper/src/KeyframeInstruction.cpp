@@ -219,7 +219,7 @@ DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver
     }
 
     uint32_t now = m_sync->CurrentMicros();
-    if (now < m_start.MS) return DriverInstructionResult::Done;
+    if (now < m_start.MS) return DriverInstructionResult::Success;
 	if (stepsLeft > 0)
 	{
         float startUS = now < m_start.MS * 1000.0f ? 0 : (float)(now - m_start.MS * 1000.0f);
