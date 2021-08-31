@@ -56,7 +56,7 @@ void MultiStepperClass::AttachDriver(StepperDriver* driver)
 
 void MultiStepperClass::UpdateDrivers()
 {
-	DebugToolsFunctionBegin();
+	DebugToolsFunctionBeginNoWarn();
 	DebugToolsStep("Before for loop");
 
 #ifdef MSTEP_DEBUG
@@ -110,6 +110,13 @@ void MultiStepperClass::UpdateDrivers()
 			if (result == DriverInstructionResult::Done)
 			{
 				DebugToolsStep("Driver instruction set null");
+				if (m_drivers[i]->Instruction)
+				{
+					DebugToolsFunctionBeginAlloc(-120);
+					DebugToolsStep("Deleting instruction");
+					DebugTools.NotifyMemoryFree(m_drivers[i]->Instruction->Size());
+					delete m_drivers[i]->Instruction;
+				}
 				m_drivers[i]->SetInstruction(nullptr);
 			}
 			if (m_callback != nullptr)

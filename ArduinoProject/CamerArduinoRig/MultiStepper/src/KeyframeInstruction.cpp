@@ -260,3 +260,12 @@ DriverInstructionResult KeyframeDriverInstruction::Execute(StepperDriver* driver
     }
     return DriverInstructionResult::Success;
 }
+
+size_t KeyframeDriverInstruction::Size() const
+{
+    return sizeof(KeyframeDriverInstruction);
+}
+
+KeyframeDriverInstruction::~KeyframeDriverInstruction()
+{
+}

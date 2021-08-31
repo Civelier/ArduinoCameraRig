@@ -10,26 +10,81 @@
 
 void watchdogSetup(void) {/*** watchdogDisable (); ***/ }
 
-TraceObject::TraceObject(uint32_t line, const char* fileName, const char* funcName)
-{
-    DebugTools.FunctionEnter(line, fileName, funcName);
-}
+const size_t MaxMem = 98304;
 
-TraceObject::~TraceObject()
-{
-    DebugTools.FunctionExit();
-}
-
-void DebugToolsClass::SetDebugOutput(Print* output)
+void DebugToolsClass::SetDebugOutput(Stream* output)
 {
 	m_debugStream = output;
 }
 
-void DebugToolsClass::FunctionEnter(uint32_t line, const char* fileName, const char* funcName)
+Stream* DebugToolsClass::GetDebugOutput()
+{
+    return m_debugStream;
+}   
+
+typedef void (*func_t)();
+
+func_t ClearMemFunc;
+
+void ClearMemory()
+{
+    uint32_t* ptr = nullptr;
+
+    for (ptr += 1; ptr < (uint32_t*)(MaxMem / 4); ptr++)
+    {
+        if (ptr != (uint32_t*)ClearMemFunc && ptr != (uint32_t*)&ptr && ptr != (uint32_t*)MaxMem && ptr != (uint32_t*)&ClearMemFunc)
+        {
+            *ptr = 0xFFFFFFFF;
+        }
+    }
+}
+
+void DebugToolsClass::CleanMemory()
+{
+    atexit(ClearMemory);
+    m_debugStream->println("Wiping memory!");
+    m_debugStream->flush();
+    delay(100);
+    exit(0);
+}
+
+void DebugToolsClass::NotifyMemoryAllocation(int size)
+{
+    m_allocated += size;
+}
+
+void DebugToolsClass::NotifyMemoryFree(int size)
+{
+    m_allocated -= size;
+}
+
+int DebugToolsClass::GetAllocatedMemory()
+{
+    return m_allocated;
+}
+
+void DebugToolsClass::PrintCurrentlyAllocatedMemory()
+{
+    m_debugStream->print("Memory: ");
+    m_debugStream->print(m_allocated);
+    m_debugStream->println(" bytes");
+    m_debugStream->flush();
+}
+
+size_t DebugToolsClass::GetFreeMem()
+{
+    size_t mem = 0;
+    for (uint8_t* ptr = (uint8_t*)1; ptr < (uint8_t*)MaxMem; ++ptr)
+        if (*ptr == 0xFF) ++mem;
+    return mem;
+}
+
+void DebugToolsClass::FunctionEnter(uint16_t line, const char* fileName, const char* funcName)
 {
     DebugInfo debugInfo{ (DebugInfoTypeFlags)(DebugInfoTypeFlags::HasFunc | DebugInfoTypeFlags::IsTrace) };
     char* file_ptr = (char*)fileName;
     debugInfo.Line = { line };
+    debugInfo.MemLeft = GetAllocatedMemory();
 
     for (char* c = file_ptr; *c != 0; c++)
     {
@@ -38,12 +93,41 @@ void DebugToolsClass::FunctionEnter(uint32_t line, const char* fileName, const c
 
     strlcpy(debugInfo.FileName, file_ptr, DEBUG_TOOLS_FILE_NAME_LENGTH);
     strlcpy(debugInfo.FunctionName, funcName, DEBUG_TOOLS_STEP_NAME_LENGTH);
-    *m_debugInfo = debugInfo;
+    *m_debugInfo = DebugInfo(debugInfo);
     m_callStack->push_back(debugInfo);
 }
 
-void DebugToolsClass::FunctionExit()
+void DebugToolsClass::FunctionExit(int memLeft, bool suppressWarning, int memAllowed)
 {
+    auto endMem = GetAllocatedMemory();
+    auto delta = endMem - memLeft; // + means allocated, - means freed
+    int allowed = delta - memAllowed;
+    if (!suppressWarning && allowed)
+    {
+        auto back = m_callStack->operator[](m_callStack->size() != 0 ? m_callStack->size() - 1 : 0);
+        if (allowed > 0) // Less mem free now than before - allocated memory
+        {
+            m_debugStream->println(4);
+            m_debugStream->print("[Warning] Possible memory leak in '");
+            m_debugStream->print(back.FunctionName);
+            m_debugStream->print("', bytes leaked: ");
+            m_debugStream->print(allowed);
+            m_debugStream->print(" over leak budget of: ");
+            m_debugStream->println(memAllowed);
+            m_debugStream->flush();
+        }
+        if (allowed < 0) // More mem free than before - freed memory
+        {
+            m_debugStream->println(4);
+            m_debugStream->print("[Warning] Possible unwanted freeing of memory in '");
+            m_debugStream->print(back.FunctionName);
+            m_debugStream->print("', bytes freed: ");
+            m_debugStream->print(-allowed);
+            m_debugStream->print(" over freeing budget of: ");
+            m_debugStream->println(-memAllowed);
+            m_debugStream->flush();
+        }
+    }
     m_callStack->pop_back();
     *m_debugInfo = m_callStack->back();
 }
@@ -51,12 +135,11 @@ void DebugToolsClass::FunctionExit()
 void DebugToolsClass::SetupWatchdog(uint32_t ms)
 {
     watchdogEnable(ms);
-    
     //m_array = new Alloc_t(DEBUG_TOOLS_STACK_LENGTH, {});
-    *m_callStack = Stack_t(0);
+    m_callStack = new Stack_t(1);
 }
 
-void DebugToolsClass::ResetWatchdog(uint32_t line, const char* fileName, const char* funcName, const char* stepName)
+void DebugToolsClass::ResetWatchdog(uint16_t line, const char* fileName, const char* funcName, const char* stepName)
 {
     watchdogReset();
     
@@ -80,7 +163,7 @@ void DebugToolsClass::ResetWatchdog(uint32_t line, const char* fileName, const c
         m_debugInfo->TypeFlags = (DebugInfoTypeFlags)(m_debugInfo->TypeFlags | DebugInfoTypeFlags::HasCount);
         m_debugInfo->Line = line;
     }
-    
+    m_callStack->back().MemLeft = GetAllocatedMemory();
 }
 
 bool DebugToolsClass::WasLastResetFromWatchdog()
@@ -123,12 +206,15 @@ void DebugToolsClass::PrintStack()
 {
     PrintTrace(*m_debugStream, m_callStack->begin(), 0, m_callStack->size());
     m_debugStream->println();
+    m_debugStream->flush();
 }
+
 
 void DebugToolsClass::PrintDebugInfo(DebugInfoDisplayFlags displayFlags)
 {
     m_debugInfo->Display(*m_debugStream, displayFlags);
     m_debugStream->println();
+    m_debugStream->flush();
 }
 
 void DebugInfo::Display(Print& print, DebugInfoDisplayFlags displayFlags)
@@ -170,13 +256,24 @@ void DebugInfo::Display(Print& print, DebugInfoDisplayFlags displayFlags)
         print.print(Count);
         print.print("' ");
     }
+
+    if ((flags & DebugInfoDisplayFlags::MentionMemory) == DebugInfoDisplayFlags::MentionMemory)
+    {
+        print.print("Memory: '");
+        print.print(MemLeft);
+        print.print("' ");
+    }
+
     print.print("}");
 }
 
 DebugToolsClass::DebugToolsClass()
 {
+    //watchdogDisable();
     m_debugInfo = (DebugInfo*)malloc(sizeof(DebugInfo));
-    m_callStack = (Stack_t*)malloc(sizeof(Stack_t));
+    //NotifyMemoryAllocation(sizeof(DebugInfo));
+    //m_callStack = (Stack_t*)malloc(sizeof(Stack_t));
+    //NotifyMemoryAllocation(sizeof(Stack_t));
 }
 
 DebugToolsClass DebugTools;

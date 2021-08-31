@@ -20,6 +20,8 @@
 #define CHANNEL_COUNT 2
 #define BUFFERS_SIZE 50
 
+#define PrintDebugTracePin 53
+
 using smallSize_t = uint16_t;
 
 
@@ -105,6 +107,20 @@ struct KeyframeBuffer
 	}
 };
 
+
+#define DebugStep() USB.println((uint16_t)StatusCode::Debug); USB.print('<'); USB.print(__LINE__); USB.print("> ")
+
+#define Adr(value) DebugStep(); USB.print("&"); USB.print(#value); USB.print(" = "); USB.println((int)&value, HEX); USB.flush()
+
+#define DebugValue(value) DebugStep(); USB.print(#value); USB.print(" = "); USB.println(value); USB.flush()
+
+#define DebugBegin() USB.println((uint16_t)StatusCode::DebugBlockBegin); USB.print('<'); USB.print(__LINE__); USB.print("> ")
+
+#define DebugEnd() USB.println((uint16_t)StatusCode::DebugBlockEnd)
+
+//Use before printing an error message. This is ONLY valid for the next line of text printed.
+#define PrintErrorStep(message) DebugStep(); USB.print("Error at line <"); USB.print(__LINE__); USB.print(">: ")
+
 struct CircularBuffer
 {
 	Keyframe* buffer;
@@ -114,7 +130,7 @@ struct CircularBuffer
 	smallSize_t Size;
 	CircularBuffer(size_t size)
 	{
-		buffer = new Keyframe[size]{};
+		buffer = DeclareNewArr(Keyframe, size);
 		Count = 0;
 		Index = 0;
 		ReadIndex = 0;
@@ -124,7 +140,13 @@ struct CircularBuffer
 	void Write(const Keyframe& kf)
 	{
 		DebugToolsFunctionBegin();
+		if (kf.ChannelID > CHANNEL_COUNT)
+		{
+			DebugTools.PrintStack();
+		}
 		buffer[Index] = kf;
+		/*DBGValue(Index);
+		Adr(buffer[Index]);*/
 		//kf.Print();
 		Count = max(Count, Index + 1);
 		Index = (Index + 1) % Size;
@@ -160,32 +182,24 @@ struct CircularBuffer
 		Index = 0;
 	}
 
-	Keyframe& Read()
+	const Keyframe& Read()
 	{
 		DebugToolsFunctionBegin();
-		Keyframe kf = buffer[ReadIndex];
+		const Keyframe& kf = buffer[ReadIndex];
+		/*DBGValue(ReadIndex);
+		Adr(kf);*/
 		ReadIndex = (ReadIndex + 1) % Size;
 		return kf;
 	}
 
 	~CircularBuffer()
 	{
-		delete[](buffer);
+		DeclareDeleteArr(Keyframe, Size) buffer;
 	}
 };
 
 //Use before printing a debug message. This is ONLY valid for the next line of text printed.
-#define DebugStep() USB.println((uint16_t)StatusCode::Debug)
 
-
-#define DebugValue(value) DebugStep(); USB.print(#value); USB.print(" = "); USB.println(value); USB.flush()
-
-#define DebugBegin() USB.println((uint16_t)StatusCode::DebugBlockBegin)
-
-#define DebugEnd() USB.println((uint16_t)StatusCode::DebugBlockEnd)
-
-//Use before printing an error message. This is ONLY valid for the next line of text printed.
-#define PrintErrorStep(message) DebugStep(); USB.print("Error at line <"); USB.print(__LINE__); USB.print(">: ")
 
 StatusCode status = StatusCode::Ready;
 CircularBuffer Buffers[] =
@@ -227,6 +241,7 @@ StepperDriver* GetMotor(uint16_t channelID)
 	USB.print("Attempt to get a motor from an undefined channel ID <id: ");
 	USB.print(channelID);
 	USB.println(">");
+	DebugTools.PrintStack();
 	USB.flush();
 	//exit(EXIT_FAILURE);
 	return nullptr;
@@ -249,15 +264,24 @@ StepperDriver* GetMotor(uint16_t channelID)
 
 void ComputeInstruction(const Keyframe& start, const Keyframe& end)
 {
-	DebugToolsFunctionBegin();
+	DebugToolsFunctionBeginAlloc(120); 
+	// allow allocation of 120 bytes because sizeof(KeyframeDriverInstruction) = 80
+	// and sizeof(KeyframeDriverInstruction.SpeedBuffer.Buffer) = 40
+	// So 120 bytes
+	
+	/*Adr(start);
+	Adr(end);
+
+	DBGValue(start.ChannelID);*/
 	auto motor = GetMotor(start.ChannelID);
 	if (!motor) return;
-	motor->SetInstruction(new KeyframeDriverInstruction(sync, start, end, &LinearCurve));
+	KeyframeDriverInstruction* instruction = DeclareNew(KeyframeDriverInstruction, sync, start, end, LinearCurve);
+	motor->SetInstruction(instruction);
 }
 
 void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 {
-	DebugToolsFunctionBegin();
+	DebugToolsFunctionBeginNoWarn(); // Because of ComputeInstruction
 	if (!Running) return;
 	auto buffer = GetBuffer(channelID);
 	if (!sync->Started) return;
@@ -288,6 +312,8 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 			USB.print(' ');
 			USB.println(channelID);
 			USB.flush();
+			DebugStep();
+			DebugTools.PrintCurrentlyAllocatedMemory();
 			NextInstructionRequestTime[channelID] = millis() + 1500;
 		}
 		//Serial.println(StatusCode::ReadyForInstruction);
@@ -311,7 +337,7 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 
 void serialEvent()
 {
-	DebugToolsFunctionBegin();
+	DebugToolsFunctionBeginNoWarn();
 	int cmd = USB.parseInt();
 	switch (cmd)
 	{
@@ -329,16 +355,18 @@ void serialEvent()
 			steps[i] = USB.parseInt();
 		}
 	}
-	break;
+		break;
 	case 4: // Start packet
 	{
 		status = StatusCode::Running;
 		Running = true;
 		for (size_t i = 0; i < CHANNEL_COUNT; i++)
 		{
-			auto start = Buffers[i].Read();
-			auto end = Buffers[i].Read();
+			auto buff = GetBuffer(i);
+			auto start = buff->Read();
+			auto end = buff->Read();
 			last[i] = end;
+			DebugToolsFunctionBeginAlloc(120);
 			ComputeInstruction(start, end);
 		}
 	}
@@ -354,9 +382,10 @@ void serialEvent()
 		uint16_t id = USB.parseInt();
 		uint32_t ms = USB.parseInt();
 		uint32_t steps = USB.parseInt();
+		DebugToolsFunctionBegin();
 		GetBuffer(id)->Write(Keyframe{ id, ms, steps });
 	}
-	break;
+		break;
 	case 8: // Request available for write on specific buffer
 	{
 		int channelID = USB.parseInt();
@@ -398,6 +427,10 @@ void serialEvent()
 		int channelID = USB.parseInt();
 		IsDone[channelID] = true;
 	}
+		break;
+	case 12:
+		DebugTools.CleanMemory();
+		break;
 	default:
 		break;
 	}
@@ -405,9 +438,12 @@ void serialEvent()
 
 void AtExit()
 {
-	DebugStep();
+	DebugBegin();
 	USB.println("Program exitted due to an error");
+	DebugTools.PrintStack();
+	DebugEnd();
 	USB.flush();
+
 }
 
 
@@ -417,14 +453,19 @@ void setup()
 	atexit(AtExit);
 	USB.begin(115200);
 
+	DebugTools.PrintCurrentlyAllocatedMemory();
 	DebugTools.SetDebugOutput(&USB);
+	pinMode(PrintDebugTracePin, INPUT);
+	pinMode(LED_BUILTIN, OUTPUT);
 
-	if (DebugTools.WasLastResetFromWatchdog())
+	DBGValue(digitalRead(PrintDebugTracePin));
+
+	if (digitalRead(PrintDebugTracePin))
 	{
 		DebugBegin();
 		DebugTools.PrintDebugInfo();
-		USB.println();
-		DebugTools.PrintStack();
+		/*USB.println();
+		DebugTools.PrintStack();*/
 		DebugEnd();
 	}
 
@@ -458,6 +499,21 @@ void setup()
 
 	MStep.AttachCallback(&InstructionCallback);
 	USB.println((uint16_t)status);
+	DebugTools.PrintCurrentlyAllocatedMemory();
+
+	/*USB.println("Memory test");
+	{
+		DebugToolsFunctionBegin();
+		USB.println("Test1");
+		Keyframe kf1{ 0, 0, 0 };
+		Keyframe kf2{ 0, 1500, 0 };
+		auto instruct = DeclareNew(KeyframeDriverInstruction, sync, kf1, kf2, LinearCurve);
+		DebugTools.PrintCurrentlyAllocatedMemory();
+		delete instruct;
+		DebugTools.PrintCurrentlyAllocatedMemory();
+	}*/
+
+
 	DebugToolsStep("End of setup");
 }
 
@@ -466,10 +522,9 @@ void setup()
 // the loop function runs over and over again until power down or reset
 void loop()
 {
-	DebugToolsFunctionBegin();
-
+	DebugToolsFunctionBeginNoWarn();
 	DebugToolsStep("Loop update");
-
+	//for (;;);
 	/*static int hit = 0;
 	if (hit++ == 500 && Serial.available())
 	{
