@@ -67,6 +67,7 @@ void MultiStepperClass::UpdateDrivers()
 	if (millis() > nextWakeup)
 	{
 		nextWakeup = millis() + refresh;
+		MSTEP_DEBUG_STREAM.println(4);
 		MSTEP_DEBUG_STREAM.print("Updated '");
 		MSTEP_DEBUG_STREAM.print(hit);
 		MSTEP_DEBUG_STREAM.print("' times in the last '");

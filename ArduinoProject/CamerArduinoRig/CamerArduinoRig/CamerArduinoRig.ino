@@ -18,7 +18,7 @@
 
 
 #define CHANNEL_COUNT 2
-#define BUFFERS_SIZE 50
+#define BUFFERS_SIZE 500
 
 #define PrintDebugTracePin 53
 
@@ -156,7 +156,7 @@ struct CircularBuffer
 	{
 		DebugToolsFunctionBegin();
 		if (Index >= ReadIndex) return Size - Index + ReadIndex;
-		return  ReadIndex - Index;
+		return  ReadIndex - Index - 1;
 	}
 
 	int Available()
@@ -275,7 +275,7 @@ void ComputeInstruction(const Keyframe& start, const Keyframe& end)
 	DBGValue(start.ChannelID);*/
 	auto motor = GetMotor(start.ChannelID);
 	if (!motor) return;
-	KeyframeDriverInstruction* instruction = DeclareNew(KeyframeDriverInstruction, sync, start, end, LinearCurve);
+	KeyframeDriverInstruction* instruction = DeclareNew(KeyframeDriverInstruction, sync, start, end, QuadraticInOutCurve);
 	motor->SetInstruction(instruction);
 }
 
@@ -306,27 +306,34 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 		auto kf = buffer->Read();
 		ComputeInstruction(last[channelID], kf);
 		last[channelID] = kf;
-		if (buffer->AvailableForWrite() > (buffer->Size / 2) && NextInstructionRequestTime[channelID] < millis())
+		//if (buffer->AvailableForWrite() > (buffer->Size / 2) && NextInstructionRequestTime[channelID] < millis())
+		//{
+		//	USB.print((uint16_t)StatusCode::ReadyForInstruction);
+		//	USB.print(' ');
+		//	USB.println(channelID);
+		//	USB.flush();
+		//	/*DebugStep();
+		//	DebugTools.PrintCurrentlyAllocatedMemory();*/
+		//	NextInstructionRequestTime[channelID] = millis() + 1500;
+		//}
+		if (buffer->Available() <= 0)
 		{
-			USB.print((uint16_t)StatusCode::ReadyForInstruction);
-			USB.print(' ');
-			USB.println(channelID);
-			USB.flush();
-			DebugStep();
-			DebugTools.PrintCurrentlyAllocatedMemory();
-			NextInstructionRequestTime[channelID] = millis() + 1500;
+			IsDone[channelID] = true;
 		}
 		//Serial.println(StatusCode::ReadyForInstruction);
 	}
 	for (size_t i = 0; i < CHANNEL_COUNT; i++)
 	{
-		if (!IsDone[i]) return;
+		//if (!IsDone[i]) return;
 		auto buff = GetBuffer(i);
 		if (buff && buff->Available()) return;
 	}
 	Running = false;
 	status = StatusCode::Ready;
 	USB.println((uint16_t)StatusCode::Done);
+
+	DebugStep();
+	USB.println("Done!");
 	//Serial.println(StatusCode::Debug);
 	//Serial.println("Done");
 	buffer->Clear();
@@ -335,9 +342,10 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 	return;
 }
 
-void serialEvent()
+void ReadSerial()
 {
 	DebugToolsFunctionBeginNoWarn();
+	if (!USB.available()) return;
 	int cmd = USB.parseInt();
 	switch (cmd)
 	{
@@ -431,6 +439,9 @@ void serialEvent()
 	case 12:
 		DebugTools.CleanMemory();
 		break;
+	case 13: // Print allocated memory
+		DebugTools.PrintCurrentlyAllocatedMemory();
+		break;
 	default:
 		break;
 	}
@@ -453,12 +464,11 @@ void setup()
 	atexit(AtExit);
 	USB.begin(115200);
 
-	DebugTools.PrintCurrentlyAllocatedMemory();
 	DebugTools.SetDebugOutput(&USB);
 	pinMode(PrintDebugTracePin, INPUT);
 	pinMode(LED_BUILTIN, OUTPUT);
 
-	DBGValue(digitalRead(PrintDebugTracePin));
+	//DBGValue(digitalRead(PrintDebugTracePin));
 
 	if (digitalRead(PrintDebugTracePin))
 	{
@@ -499,7 +509,8 @@ void setup()
 
 	MStep.AttachCallback(&InstructionCallback);
 	USB.println((uint16_t)status);
-	DebugTools.PrintCurrentlyAllocatedMemory();
+	/*DebugStep();
+	DebugTools.PrintCurrentlyAllocatedMemory();*/
 
 	/*USB.println("Memory test");
 	{
@@ -524,6 +535,16 @@ void loop()
 {
 	DebugToolsFunctionBeginNoWarn();
 	DebugToolsStep("Loop update");
+
+	static int hit = 0;
+
+	if (hit != millis())
+	{
+		ReadSerial();
+		hit = millis();
+	}
+
+	//ReadSerial();
 	//for (;;);
 	/*static int hit = 0;
 	if (hit++ == 500 && Serial.available())
@@ -545,4 +566,11 @@ void loop()
 /*
 7 0 0 0 7 1 0 0 7 0 1500 0 7 1 1500 0 7 0 5670 442 7 1 5670 442 7 0 14429 -344 7 1 14429 -344 7 0 19434 0 7 1 19434 0 4 11 0 11 1
 */
+/*
+7 0 0 800 7 1 0 0 8 0 8 1 7 0 1500 800 7 0 1770 1066 7 0 1905 1066 7 0 2067 533 7 0 2148 400 7 0 2229 533 7 0 2391 1066 7 0 2472 1200 7 0 2554 1066 7 0 2716 533 7 0 2797 400 7 0 2878 533 7 0 3040 1066 7 0 3121 1200 7 0 3202 1066 7 0 3364 533 7 0 3445 400 7 0 3527 533 7 0 3689 1066 7 0 3770 1200 7 0 3851 1066 7 0 4013 533 7 0 4094 400 7 0 4175 533 7 0 4337 1066 7 0 4418 1200 7 0 4500 1066 7 0 4716 1066 7 0 4824 800 7 0 4959 800 7 0 5067 1435 7 0 5202 1435 7 0 5310 557 7 0 5445 557 7 0 5554 1412 7 0 5689 1412 7 0 5797 800 7 0 5932 800 7 0 6040 1435 7 0 6175 1435 7 0 6283 557 7 0 6418 557 7 0 6527 1412 7 0 6662 1412 7 0 6770 800 7 0 6905 800 7 0 7013 1435
+7 0 7148 1435 7 0 7256 557 7 1 1500 0 7 1 1770 266 7 1 1905 266 7 1 2067 -266 7 1 2229 266 7 1 2391 -266 7 1 2554 266 7 1 2716 -266 7 1 2878 266 7 1 3040 -266 7 1 3202 266 7 1 3364 -266 7 1 3527 266 7 1 3689 -266 7 1 3851 266 7 1 4013 -266 7 1 4175 266 7 1 4337 -266 7 1 4500 266 7 1 4716 266 7 1 4824 0 7 1 4959 0 7 1 5067 -581 7 1 5202 -581 7 1 5310 747 7 1 5445 747 7 1 5554 -858 7 1 5689 -858 7 1 5797 0 7 1 5932 0 7 1 6040 -581 7 1 6175 -581 7 1 6283 747 7 1 6418 747 7 1 6527 -858 7 1 6662 -858 7 1 6770 0 7 1 6905 0 7 1 7013 -581 7 1 7148 -581 7 1 7256 747 7 1 7391 747 7 1 7500 -858 7 1 7635 -858 7 1 7743 0 7 1 7878 0 7 1 7986 -581 7 1 8121 -581 7 1 8229 747 7 0 7391 557 7 0 7500 1412 7 0 7635 1412 7 0 7743 800 7 0 7878 800 7 0 7986 1435 7 0 8121 1435 7 0 8229 557 7 0 8364 557 7 0 8472 1412 7 0 8608 1412 7 0 8716 800 7 0 8851 800 4
+*/
 
+/*
+7 0 0 800 7 1 0 0 7 0 1500 800 7 0 2334 1093 7 0 3168 618 7 0 4836 1095 7 0 6505 800 7 1 1500 0 7 1 2334 -400 7 1 4002 384 7 1 5670 -409 7 1 6505 0 4
+*/

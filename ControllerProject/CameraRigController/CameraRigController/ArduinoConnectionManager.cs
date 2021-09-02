@@ -38,7 +38,7 @@ namespace CameraRigController
 
         public ArduinoConnectionManager()
         {
-            OpenPort();
+            SetPortSettings();
             _arduinoPlay = new Thread(PlayRoutine);
         }
 
@@ -47,6 +47,7 @@ namespace CameraRigController
             try
             {
                 var s = Port.ReadLine();
+                Debug.WriteLine($"Raw Arduino: {s}");
                 var status = new ArduinoRecievePacket(s);
                 switch (status.Status)
                 {
@@ -84,6 +85,7 @@ namespace CameraRigController
             {
                 try
                 {
+                    SetPortSettings();
                     Port.Open();
                 }
                 catch (UnauthorizedAccessException e)
@@ -130,9 +132,11 @@ namespace CameraRigController
             {
                 if (AttemptConnection())
                 {
-                    var timeout = DateTime.Now + TimeSpan.FromSeconds(2);
+                    Debug.WriteLine("Calling arduino");
+                    var timeout = DateTime.Now + TimeSpan.FromSeconds(5);
                     while (DateTime.Now < timeout)
                     {
+                        Thread.Sleep(100);
                         //if (Port.BytesToRead > 0)
                         //{
                         //    _lastPacket = new ArduinoRecievePacket(Port.ReadLine());
@@ -141,6 +145,7 @@ namespace CameraRigController
                         if (_newPacket)
                         {
                             _newPacket = false;
+                            Debug.WriteLine("Arduino responded");
                             return _lastPacket.Status == ArduinoStatusCode.Ready;
                         }
                     }
@@ -148,9 +153,11 @@ namespace CameraRigController
             }
             else
             {
+                Debug.WriteLine("Closed port to attempt a new connection");
                 Port.Close();
                 return false;
             }
+            Debug.WriteLine("Try connection failed");
             return false;
         }
 
@@ -160,8 +167,9 @@ namespace CameraRigController
             return TryConnect();
         }
 
-        private void OpenPort()
+        private void SetPortSettings()
         {
+            Debug.WriteLine("Openning port");
             Port = new SerialPort();
             if (!string.IsNullOrEmpty(ComPort)) Port.PortName = ComPort;
             Port.BaudRate = 115200;
@@ -173,9 +181,10 @@ namespace CameraRigController
 
         private void Port_Disposed(object sender, EventArgs e)
         {
+            Debug.WriteLine("Port disposed");
             Port.DataReceived -= Port_DataReceived;
             Port.Disposed -= Port_Disposed;
-            OpenPort();
+            //OpenPort();
         }
 
         public ArduinoStatusCode SendStatusRequest()
@@ -276,6 +285,7 @@ namespace CameraRigController
                 int timeComparisson = Keyframe.MS.CompareTo(other.Keyframe.MS);
                 if (timeComparisson == 0) return MotorChannelID.CompareTo(other.MotorChannelID);
                 return timeComparisson;
+                
             }
         }
 
@@ -287,11 +297,11 @@ namespace CameraRigController
                 while (!_run)
                 {
                     if (_abort) return;
-                    Thread.Sleep(50);
+                    Thread.Sleep(100);
                 }
                 _running = true;
                 //if (ResetArduino())
-                if (TryConnect())
+                if (TryCon­nect())
                 {
                     Thread.Sleep(500);
                     Debug.WriteLine("Arduino connected");
@@ -324,18 +334,19 @@ namespace CameraRigController
                         }
 
 
-                        var bufferAvailable = new int[Settings.Default.MotorChannelCount];
-                        // Get buffer sizes
-                        for (int i = 0; i < Settings.Default.MotorChannelCount; i++)
-                        {
-                            var count = SendBufferAvailableForWriteRequest((UInt16)i);
-                            if (count.HasValue)
-                            {
-                                bufferAvailable[i] = count.Value;
-                            }
-                            if (!_run) break;
-                            if (_abort) return;
-                        }
+                        //var bufferAvailable = new int[Settings.Default.MotorChannelCount];
+                        //// Get buffer sizes
+                        //for (int i = 0; i < Settings.Default.MotorChannelCount; i++)
+                        //{
+                        //    var count = SendBufferAvailableForWriteRequest((UInt16)i);
+                        //    Thread.Sleep(1);
+                        //    if (count.HasValue)
+                        //    {
+                        //        bufferAvailable[i] = count.Value;
+                        //    }
+                        //    if (!_run) break;
+                        //    if (_abort) return;
+                        //}
                         bool firstRun = true; // To send the start command to the arduino
                         while (!_abort && _run)
                         {
@@ -351,9 +362,9 @@ namespace CameraRigController
                                 if (infos.Count <= 0) break;
 
                                 // Keep track of the buffer's available length
-                                for (; bufferAvailable[i] > 0; bufferAvailable[i]--)
+                                for (;infos.Count > 0;)
                                 {
-                                    if (infos.Count == 0) break;
+                                    //if (infos.Count == 0) break;
                                     // Send next keyframe
                                     var info = infos.Dequeue();
                                     SendKeyframeData(info.Keyframe, info.MotorChannelID);
@@ -363,6 +374,7 @@ namespace CameraRigController
                                     if (!_run) break;
                                     if (_abort) return;
                                 }
+                                //SendEndOfBufferRequest((UInt16)i);
                             }
 
                             if (!_run) break;
@@ -373,42 +385,43 @@ namespace CameraRigController
                                 SendDataPacket(ArduinoSendRequestPacket.StartRequest.ToString());
                                 firstRun = false;
                             }
+                            break; // Because were not filling the buffer multiple times anymore
 
                             // Wait for either 'Done' or 'ReadyForInstruction' status from arduino
-                            while (!_abort && _run)
-                            {
-                                if (_newPacket)
-                                {
-                                    if (_lastPacket.Status == ArduinoStatusCode.Done)
-                                    {
-                                        _newPacket = false;
-                                        break;
-                                    }
-                                    if (_lastPacket.Status == ArduinoStatusCode.ReadyForInstruction)
-                                    {
-                                        _newPacket = false;
-                                        if (UInt16.TryParse(_lastPacket.Data, out UInt16 channelID))
-                                        {
-                                            if (channelID >= 0 && channelID < Settings.Default.MotorChannelCount)
-                                            {
-                                                if (keyframeInfos[channelID].Count <= 0)
-                                                {
-                                                    SendEndOfBufferRequest(channelID);
-                                                    break;
-                                                }
-                                                var count = SendBufferAvailableForWriteRequest(channelID);
-                                                if (count.HasValue)
-                                                {
-                                                    bufferAvailable[channelID] = count.Value;
-                                                }
-                                                else if (_run && !_abort) throw new Exception("Possible communication error");
-                                            }
-                                            else throw new Exception($"ChannelID was out of range: {channelID}");
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
+                            //while (!_abort && _run)
+                            //{
+                            //    if (_newPacket)
+                            //    {
+                            //        if (_lastPacket.Status == ArduinoStatusCode.Done)
+                            //        {
+                            //            _newPacket = false;
+                            //            break;
+                            //        }
+                            //        if (_lastPacket.Status == ArduinoStatusCode.ReadyForInstruction)
+                            //        {
+                            //            _newPacket = false;
+                            //            if (UInt16.TryParse(_lastPacket.Data, out UInt16 channelID))
+                            //            {
+                            //                if (channelID >= 0 && channelID < Settings.Default.MotorChannelCount)
+                            //                {
+                            //                    if (keyframeInfos[channelID].Count <= 0)
+                            //                    {
+                            //                        SendEndOfBufferRequest(channelID);
+                            //                        break;
+                            //                    }
+                            //                    var count = SendBufferAvailableForWriteRequest(channelID);
+                            //                    if (count.HasValue)
+                            //                    {
+                            //                        bufferAvailable[channelID] = count.Value;
+                            //                    }
+                            //                    else if (_run && !_abort) throw new Exception("Possible communication error");
+                            //                }
+                            //                else throw new Exception($"ChannelID was out of range: {channelID}");
+                            //            }
+                            //            break;
+                            //        }
+                            //    }
+                            //}
                         }
 
                         
@@ -432,6 +445,7 @@ namespace CameraRigController
                         {
                             if (_newPacket)
                             {
+                                _newPacket = false;
                                 if (_lastPacket.Status == ArduinoStatusCode.Done)
                                 {
                                     Debug.WriteLine("Playback complete");
@@ -452,6 +466,7 @@ namespace CameraRigController
                         //}
                     }
                 }
+                
                 //Thread.Sleep(1000);
                 //if (Port.IsOpen)
                 //{
