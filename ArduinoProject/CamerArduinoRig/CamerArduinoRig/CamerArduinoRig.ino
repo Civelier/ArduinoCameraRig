@@ -288,15 +288,14 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 	//if (result == DriverInstructionResult::Done) DBGValue(Buffer.Available());
 	if (!buffer->Available() && result == DriverInstructionResult::Done)
 	{
-		DebugStep();
+		IsDone[channelID] = true;
+		/*DebugStep();
 		USB.print("Channel '");
 		USB.print(channelID);
 		USB.println("' is done!");
-		USB.flush();
-		return;
-	}
-	
-	if (buffer->Available() && result == DriverInstructionResult::Done)
+		USB.flush();*/
+		
+	} else if (buffer->Available() && result == DriverInstructionResult::Done)
 	{
 		DebugToolsStep("New instruction");
 		/*DebugStep();
@@ -318,13 +317,12 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 		//}
 		if (buffer->Available() <= 0)
 		{
-			IsDone[channelID] = true;
 		}
 		//Serial.println(StatusCode::ReadyForInstruction);
 	}
 	for (size_t i = 0; i < CHANNEL_COUNT; i++)
 	{
-		//if (!IsDone[i]) return;
+		if (!IsDone[i]) return;
 		auto buff = GetBuffer(i);
 		if (buff && buff->Available()) return;
 	}
@@ -538,11 +536,13 @@ void loop()
 
 	static int hit = 0;
 
-	if (hit != millis())
+	/*if (hit != millis())
 	{
 		ReadSerial();
 		hit = millis();
-	}
+	}*/
+
+	ReadSerial();
 
 	//ReadSerial();
 	//for (;;);

@@ -76,6 +76,10 @@ namespace CameraRigController
             {
                 Debug.WriteLine(ex.Message);
             }
+            catch (InvalidOperationException ex)
+            {
+                Debug.WriteLine($"Port was closed: {ex.Message}");
+            }
             
         }
 
