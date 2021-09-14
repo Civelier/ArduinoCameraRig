@@ -7,16 +7,21 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <DataTemplate x:Key="StringTemplate" DataType="vm:StringEditorVM">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="25"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
                 <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
-                <TextBox Text="{Binding Value}" Grid.Column="2"/>
+                <TextBox x:Name="StringBox" Tag="{Binding PropertyName}" Text="{Binding Value}" Grid.Column="2"
+                         local:FocusExtension.IsFocused="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"/>
+                <Button Grid.Column="3" IsDefault="True" Command="{Binding Confirm}" CommandParameter="{Binding ElementName=StringBox}"
+                        Visibility="{Binding ElementName=StringBox, Path=IsFocused, Converter={StaticResource BoolToVis}}">OK</Button>
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="ReadonlyStringTemplate" DataType="vm:StringEditorVM">
@@ -32,15 +37,19 @@
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="SimpleIntTemplate" DataType="vm:SimpleIntEditorVM">
-            <Grid>
+            <Grid x:Name="SimpleIntGrid">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto" SharedSizeGroup="PropertyNameSize"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="25"/>
                 </Grid.ColumnDefinitions>
                 <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
                 <TextBlock Text="{Binding DisplayName}" Grid.Column="0"/>
-                <TextBox Text="{Binding Value}" Grid.Column="2"/>
+                <TextBox x:Name="IntBox" Text="{Binding Value}" Grid.Column="2" 
+                         local:FocusExtension.IsFocused="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"/>
+                <Button Grid.Column="3" IsDefault="True" Command="{Binding Confirm}" CommandParameter="{Binding ElementName=IntBox}"
+                        Visibility="{Binding ElementName=IntBox, Path=IsFocused, Converter={StaticResource BoolToVis}}">OK</Button>
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="SliderTemplate" DataType="vm:SliderNumberEditorVM" x:Name="Template">
@@ -55,7 +64,7 @@
                 <Rectangle Grid.Column="1" Fill="Silver" Width="2"/>
                 <TextBlock Text="{Binding Value}" Grid.Column="2"/>
                 <Slider Grid.Column="3" Value="{Binding Value}" Maximum="{Binding Maximum}" Minimum="{Binding Minimum}"/>
-            </Grid>
+            </Grid> 
         </DataTemplate>
         <DataTemplate x:Key="EnumTemplate" DataType="vm:EnumEditorVM">
             <Grid HorizontalAlignment="Stretch">
@@ -86,8 +95,9 @@
             <TextBlock Text="Name" Grid.Column="1"/>
             <TextBlock Text="Value" Grid.Column="3"/>
         </Grid>
-        <ListBox x:Name="PropertyListBox" ItemTemplateSelector="{StaticResource FieldTemplateSelector}"
-                 Grid.Row="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+        <ListBox x:Name="PropertyListBox" ItemTemplateSelector="{DynamicResource ResourceKey=FieldTemplateSelector}"
+                 Grid.Row="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                 TreeView.SelectedItemChanged="PropertyListBox_SelectedItemChanged">
         </ListBox>
     </Grid>
 </UserControl>

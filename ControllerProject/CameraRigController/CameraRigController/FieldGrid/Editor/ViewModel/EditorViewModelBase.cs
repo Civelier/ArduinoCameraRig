@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GalaSoft.MvvmLight.CommandWpf;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -7,12 +8,14 @@ using System.Threading.Tasks;
 using System.Windows;
 
 namespace CameraRigController.FieldGrid.Editor.ViewModel
-{
+{   
     public abstract class EditorViewModelBase : DependencyObject, INotifyPropertyChanged
     {
         public string PropertyName { get; set; }
         public abstract string DisplayName { get; set; }
         public abstract object ObjectValue { get; set; }
+
+        public abstract bool IsSelected { get; set; }
 
         public Type InjectedType { get; set; }
 
@@ -54,11 +57,37 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
                 a as T);
             return f.ToArray();
         }
-    }
+
+        public virtual void OnSelected()
+        {
+            IsSelected = true;
+        }
+
+        public virtual void OnUnselected()
+        {
+            IsSelected = false;
+        }
+
+
+    }   
 
     public abstract class EditorViewModelBase<TEditor> : EditorViewModelBase 
         where TEditor : EditorViewModelBase<TEditor>
     {
+
+
+        public override bool IsSelected
+        {
+            get { return (bool)GetValue(IsSelectedProperty); }
+            set { SetValue(IsSelectedProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for IsSelected.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty IsSelectedProperty =
+            DependencyProperty.Register("IsSelected", typeof(bool), typeof(TEditor), new PropertyMetadata(false));
+
+
+
         public override string DisplayName
         {
             get { return (string)GetValue(DisplayNameProperty); }
@@ -100,8 +129,17 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
         protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
         {
             base.OnPropertyChanged(e);
-            if (e.Property.Name == nameof(ObjectValue)) Value = (TValue)e.NewValue;
-            if (e.Property.Name == nameof(Value)) ObjectValue = e.NewValue;
+            try
+            {
+                if (e.Property.Name == nameof(Value)) ObjectValue = e.NewValue;
+                if (e.Property.Name == nameof(ObjectValue)) Value = (TValue)e.NewValue;
+            }
+            catch (InvalidCastException)
+            {
+
+            }
         }
+
+        
     }
 }

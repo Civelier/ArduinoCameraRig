@@ -9,7 +9,7 @@ namespace CameraRigController
     {
         public MainWindow()
         {
-            InitializeComponent();
+            Initial­izeComponent();
         }
     }
 }

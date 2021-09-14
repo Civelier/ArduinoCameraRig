@@ -9,6 +9,7 @@ using CameraRigController.FieldGrid.Editor.ViewModel;
 using System.ComponentModel;
 using System.Collections;
 using System.Windows;
+using System.Diagnostics;
 
 namespace CameraRigController.FieldGrid
 {
@@ -50,7 +51,7 @@ namespace CameraRigController.FieldGrid
         public static ObservableCollection<EditorViewModelBase> ToVMCollection(object obj)
         {
             var collection = new ObservableCollection<EditorViewModelBase>();
-
+            if (obj == null) return null;
             var properties = obj.GetType().GetProperties();
             var events = obj.GetType().GetEvents();
 
@@ -84,7 +85,19 @@ namespace CameraRigController.FieldGrid
                     editor.PropertyName = p.Name;
                     editor.PropertyChanged += (sender, args) =>
                     {
-                        if (args.PropertyName == "ObjectValue" && !(p.GetValue(obj)?.Equals(editor.ObjectValue) ?? false)) p.SetValue(obj, editor.ObjectValue);
+                        if (args.PropertyName == "ObjectValue" && !(p.GetValue(obj)?.Equals(editor.ObjectValue) ?? false))
+                        {
+                            try
+                            {
+                                var converted = SafeConvert(editor.ObjectValue, editor.InjectedType);
+                                if (converted != null)
+                                    p.SetValue(obj, converted);
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.WriteLine($"Failed to set value of {editor.PropertyName} to {editor.ObjectValue} because {e.Message}");
+                            }
+                        }
                     };
                     editor.PropertyAttributes = p.GetCustomAttributes();
                     editor.ObjectValue = p.GetValue(obj);
@@ -257,6 +270,38 @@ namespace CameraRigController.FieldGrid
         public static IEnumerable<LocalValueEntry> ToEnumerable(this LocalValueEnumerator enumerator)
         {
             while (enumerator.MoveNext()) yield return enumerator.Current;
+        }
+
+        public static TValue? SafeConvert<TValue>(object x) where TValue : struct, IConvertible
+        {
+            try
+            {
+                return (TValue)Convert.ChangeType(x, typeof(TValue));
+            }
+            catch (InvalidCastException)
+            {
+                return null;
+            }
+        }
+
+        public static object SafeConvert(object x, Type type)
+        {
+            try
+            {
+                return Convert.ChangeType(x, type);
+            }
+            catch (InvalidCastException)
+            {
+                return null;
+            }
+            catch (ArgumentNullException)
+            {
+                return null;
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
         }
     }
 }

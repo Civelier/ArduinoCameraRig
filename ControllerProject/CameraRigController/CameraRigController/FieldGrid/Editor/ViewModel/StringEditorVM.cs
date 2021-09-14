@@ -9,7 +9,7 @@ namespace CameraRigController.FieldGrid.Editor.ViewModel
 {
     [FieldGridEditor(typeof(string))]
     [FieldgridTemplate("StringTemplate")]
-    public class StringEditorVM : EditorViewModelBase<StringEditorVM, string>
+    public class StringEditorVM : TextBoxEditorVM<StringEditorVM, string>
     {
     }
 }
