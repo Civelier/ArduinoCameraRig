@@ -59,6 +59,11 @@
                 </Canvas>
             </GroupBox>
             <TabControl x:Name="TabCTL" Margin="10,38,10,83" Grid.ColumnSpan="2" Grid.Row="1" ItemsSource="{Binding Main.Tabs.Tabs}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="DataContextChanged">
+                        <i:InvokeCommandAction Command="{Binding Main.TabCTLDataContextChangedCommand}" CommandParameter="TabCTL"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
                 <TabControl.ItemTemplate>
                     <DataTemplate DataType="ViewModel:MotorTabVM">
                         <TextBlock Text="{Binding Data.MotorChannelName}"/>

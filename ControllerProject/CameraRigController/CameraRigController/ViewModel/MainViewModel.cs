@@ -39,12 +39,18 @@ namespace CameraRigController.ViewModel
             RefreshPortsCommand = new RelayCommand(RefreshPorts);
             CloseCommand = new RelayCommand(Close);
             SelectConfigCommand = new RelayCommand(SelectConfig);
+            TabCTLDataContextChangedCommand = new RelayCommand<TabControl>(TabCTLDataContextChanged);
             _lastPorts = new string[0];
             
             SelectVM = new ConfigSelectVM();
             SelectVM.PropertyChanged += SelectVM_PropertyChanged;
             Settings.PropertyChanged += Settings_PropertyChanged;
             Title = "Camerarduino controller interface";
+        }
+
+        private void TabCTLDataContextChanged(TabControl ctl)
+        {
+            ctl.SelectedIndex = 0;
         }
 
         private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -192,6 +198,7 @@ namespace CameraRigController.ViewModel
         public RelayCommand CloseCommand { get; set; }
 
         public RelayCommand SelectConfigCommand { get; set; }
+        public RelayCommand<TabControl> TabCTLDataContextChangedCommand { get; set; }
 
         /// <summary>
         /// Computes the channels and sends to the arduino using <see cref="ArduinoConnectionManager.Load(List{AnimChannel})"/>
