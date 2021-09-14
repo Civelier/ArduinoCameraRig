@@ -72,6 +72,8 @@ namespace CameraRigController
 
         private void Value_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            var config = (MotorTabsVM)sender;
+            WriteConfig(config);
             OnPropertyChanged(nameof(CurrentConfig));
         }
 

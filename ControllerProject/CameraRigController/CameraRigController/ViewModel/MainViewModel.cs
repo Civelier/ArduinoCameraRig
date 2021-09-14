@@ -44,7 +44,6 @@ namespace CameraRigController.ViewModel
             SelectVM = new ConfigSelectVM();
             SelectVM.PropertyChanged += SelectVM_PropertyChanged;
             Settings.PropertyChanged += Settings_PropertyChanged;
-            Tabs.PropertyChanged += Tabs_PropertyChanged;
             Title = "Camerarduino controller interface";
         }
 
@@ -55,7 +54,7 @@ namespace CameraRigController.ViewModel
 
         private void SelectVM_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            OnPropertyChanged(new DependencyPropertyChangedEventArgs(SelectVMProperty, SelectVM, SelectVM));
+            OnPropertyChanged(new DependencyPropertyChangedEventArgs(SelectVMProperty, null, SelectVM));
         }
 
         private void Tabs_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -161,7 +160,18 @@ namespace CameraRigController.ViewModel
         public MotorTabsVM Tabs
         {
             get { return (MotorTabsVM)GetValue(TabsProperty); }
-            set { SetValue(TabsProperty, value); }
+            set 
+            {
+                if (Tabs.Name == "Default")
+                {
+                    Tabs.PropertyChanged -= Tabs_PropertyChanged;
+                }
+                SetValue(TabsProperty, value);
+                if (value.Name == "Default")
+                {
+                    Tabs.PropertyChanged += Tabs_PropertyChanged;
+                }
+            }
         }
 
 

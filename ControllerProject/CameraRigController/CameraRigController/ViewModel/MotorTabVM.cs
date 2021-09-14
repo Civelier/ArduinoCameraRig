@@ -4,6 +4,7 @@ using GalaSoft.MvvmLight;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -38,16 +39,20 @@ namespace CameraRigController.ViewModel
         public ObservableCollection<MotorTabVM> Tabs
         {
             get => _tabs;
-            set 
+            private set 
             {
                 _tabs = value;
+                foreach (var tab in value)
+                {
+                    tab.Data.PropertyChanged += Data_PropertyChanged;
+                }
                 RaisePropertyChanged(nameof(Tabs));
             }
         }
 
         public MotorTabsVM()
         {
-            _tabs = new ObservableCollection<MotorTabVM>();
+            Tabs = new ObservableCollection<MotorTabVM>();
             var count = Settings.Default.MotorChannelCount;
             for (int i = 0; i < count; i++)
             {
@@ -59,9 +64,36 @@ namespace CameraRigController.ViewModel
                         MotorChannelID = i,
                     }
                 };
-                tab.Data.PropertyChanged += (sender, e) => RaisePropertyChanged(nameof(Tabs)); 
+                //tab.Data.PropertyChanged += (sender, e) => RaisePropertyChanged(nameof(Tabs)); 
                 Tabs.Add(tab);
             }
+        }
+
+        private void _tabs_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                foreach (var item in e.NewItems)
+                {
+                    var tab = (MotorTabVM)item;
+                    tab.Data.PropertyChanged += Data_PropertyChanged;
+                }
+            }
+            if (e.Action == NotifyCollectionChangedAction.Remove ||
+                e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                foreach (var item in e.OldItems)
+                {
+                    var tab = (MotorTabVM)item;
+                    tab.Data.PropertyChanged -= Data_PropertyChanged;
+                }
+            }
+            RaisePropertyChanged(nameof(Tabs));
+        }
+
+        private void Data_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            RaisePropertyChanged(nameof(Tabs));
         }
 
 
@@ -86,6 +118,7 @@ namespace CameraRigController.ViewModel
         {
             Name = (string)info.GetValue(nameof(Name), typeof(string));
             Tabs = (ObservableCollection<MotorTabVM>)info.GetValue(nameof(Tabs), typeof(ObservableCollection<MotorTabVM>));
+
         }
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
