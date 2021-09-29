@@ -86,7 +86,7 @@ enum class StatusCode : uint16_t
 ```DebugBlockBegin``` indicates the start of a debug block.\
 ```DebugBlockEnd``` indicates the end of the debug block.\
 ```Error``` is a bit flag used to determine if the code is an error.\
-```MotorChannelOutOfRangeError``` indicates the requested motor channel ID (see [Configuration](https://github.com/Civelier/ArduinoCameraRig/tree/main#configuration)) is out of range. This can happen as a result of a bug or as an invalid keyframe (see [Send Keyframe]).
+```MotorChannelOutOfRangeError``` indicates the requested motor channel ID (see [Configuration](https://github.com/Civelier/ArduinoCameraRig/tree/main#configuration)) is out of range. This can happen as a result of a bug or as an invalid keyframe (see [Send Keyframe](https://github.com/Civelier/ArduinoCameraRig#send-keyframe)).
 
 ##### Error clear:
 Command ID: 2\
@@ -113,7 +113,7 @@ Instructs the Arduino to start playback.
 Command ID: 5\
 No parameters.\
 Behavior:\
-In order to ensure a consistent precision during playback, a "clock" is used. When started, it will give the time relative to its starting point in microseconds. The Arduino will reply using the ```Debug``` status code (see [Get status]()) followed by the time in us since the start of the sync clock on the next line.
+In order to ensure a consistent precision during playback, a "clock" is used. When started, it will give the time relative to its starting point in microseconds. The Arduino will reply using the ```Debug``` status code (see [Get status](https://github.com/Civelier/ArduinoCameraRig#get-status)) followed by the time in us since the start of the sync clock on the next line.
 
 ##### Request start sync:
 Command ID: 6\
