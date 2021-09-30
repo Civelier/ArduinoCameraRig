@@ -17,7 +17,7 @@ This is an ongoing project to make a motion controlled camera rig. There is an e
 Coming soon...
 
 ## Workflow
-
+![alt text](https://github.com/Civelier/ArduinoCameraRig/blob/main/Camera%20Rig%20workflow.jpeg)
 
 ## Sections
 This project is split in multiple sections:
