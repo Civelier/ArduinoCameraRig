@@ -32,16 +32,45 @@ namespace CameraRigController.ViewModel
         /// </summary>
         public MainViewModel()
         {
-            Tabs = new MotorTabsVM();
+            Tabs = AppSettings.Instance.CurrentConfig;
             FileManager = null;
             OpenFileCommand = new RelayCommand(OpenFile);
             PlayCommand = new RelayCommand(Play);
             RefreshPortsCommand = new RelayCommand(RefreshPorts);
             CloseCommand = new RelayCommand(Close);
+            SelectConfigCommand = new RelayCommand(SelectConfig);
+            TabCTLDataContextChangedCommand = new RelayCommand<TabControl>(TabCTLDataContextChanged);
             _lastPorts = new string[0];
+            
+            SelectVM = new ConfigSelectVM();
+            SelectVM.PropertyChanged += SelectVM_PropertyChanged;
+            Settings.PropertyChanged += Settings_PropertyChanged;
             Title = "Camerarduino controller interface";
         }
 
+        private void TabCTLDataContextChanged(TabControl ctl)
+        {
+            ctl.SelectedIndex = 0;
+        }
+
+        private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            Tabs = Settings.CurrentConfig;
+        }
+
+        private void SelectVM_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            OnPropertyChanged(new DependencyPropertyChangedEventArgs(SelectVMProperty, null, SelectVM));
+        }
+
+        private void Tabs_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            var config = AppSettings.Instance.CreateTempConfig(Tabs);
+            Tabs.PropertyChanged -= Tabs_PropertyChanged;
+            AppSettings.Instance.DefaultConfig.CopyTo(Tabs);
+            Tabs.PropertyChanged += Tabs_PropertyChanged;
+            Tabs = config;
+        }
 
         public string Title { get; set; }
         private AnimFileManager _fileManager;
@@ -51,6 +80,19 @@ namespace CameraRigController.ViewModel
         private ArduinoConnectionManager _connectionManager = new ArduinoConnectionManager();
         private ObservableCollection<RadioButton> _ports = new ObservableCollection<RadioButton>();
         private IEnumerable<string> _lastPorts;
+        private ConfigSelect _configSelectWindow;
+
+
+
+        public ConfigSelectVM SelectVM
+        {
+            get { return (ConfigSelectVM)GetValue(SelectVMProperty); }
+            set { SetValue(SelectVMProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for SelectVM.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty SelectVMProperty =
+            DependencyProperty.Register("SelectVM", typeof(ConfigSelectVM), typeof(MainViewModel), new PropertyMetadata(null));
 
 
 
@@ -121,17 +163,30 @@ namespace CameraRigController.ViewModel
             }
         }
 
-        private MotorTabsVM _tabs;
-
         public MotorTabsVM Tabs
         {
-            get => _tabs;
-            set
+            get { return (MotorTabsVM)GetValue(TabsProperty); }
+            set 
             {
-                var old = _tabs;
-                _tabs = value;
+                if (Tabs.Name == "Default")
+                {
+                    Tabs.PropertyChanged -= Tabs_PropertyChanged;
+                }
+                SetValue(TabsProperty, value);
+                if (value.Name == "Default")
+                {
+                    Tabs.PropertyChanged += Tabs_PropertyChanged;
+                }
             }
         }
+
+
+
+        // Using a DependencyProperty as the backing store for Tabs.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty TabsProperty =
+            DependencyProperty.Register("Tabs", typeof(MotorTabsVM), typeof(MainViewModel), new PropertyMetadata(AppSettings.Instance.CurrentConfig));
+
+        public AppSettings Settings => AppSettings.Instance;
 
         public RelayCommand OpenFileCommand { get; set; }
         /// <summary>
@@ -141,6 +196,9 @@ namespace CameraRigController.ViewModel
         public RelayCommand RefreshPortsCommand { get; set; }
         public RelayCommand RadioChecked { get; set; }
         public RelayCommand CloseCommand { get; set; }
+
+        public RelayCommand SelectConfigCommand { get; set; }
+        public RelayCommand<TabControl> TabCTLDataContextChangedCommand { get; set; }
 
         /// <summary>
         /// Computes the channels and sends to the arduino using <see cref="ArduinoConnectionManager.Load(List{AnimChannel})"/>
@@ -162,6 +220,7 @@ namespace CameraRigController.ViewModel
                 if (!ports.Contains((string)port.Content))
                 {
                     port.Click -= Rdo_Click;
+                    port.MouseDown -= Rdo_MouseDown;
                     //port.Checked -= Rdo_Checked;
                     Ports.Remove(port);
                 }
@@ -171,15 +230,37 @@ namespace CameraRigController.ViewModel
             {
                 var rdo = new RadioButton() { Content = port };
                 rdo.Click += Rdo_Click;
+                rdo.MouseDown += Rdo_MouseDown;
                 //rdo.Checked += Rdo_Checked;
                 Ports.Add(rdo);
             }
         }
 
+        private void SelectConfig()
+        {
+            if (_configSelectWindow == null) _configSelectWindow = new ConfigSelect();
+            _configSelectWindow.Closed += _configSelectWindow_Closed;
+            _configSelectWindow.ShowDialog();
+        }
+
+        private void _configSelectWindow_Closed(object sender, EventArgs e)
+        {
+            if (_configSelectWindow != null) _configSelectWindow.Closed -= _configSelectWindow_Closed;
+            _configSelectWindow = null;
+        }
+
+        private void Rdo_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            //throw new NotImplementedException();
+        }
+
         private void Rdo_Checked(object sender, RoutedEventArgs e)
         {
             var rdo = (RadioButton)sender;
-            _connectionManager.ComPort = (string)rdo.Content;
+            if ((rdo.IsChecked ?? false))
+            {
+                _connectionManager.ComPort = (string)rdo.Content;
+            }
         }
 
         private void Rdo_Click(object sender, RoutedEventArgs e)
@@ -194,6 +275,7 @@ namespace CameraRigController.ViewModel
         private void Close()
         {
             _connectionManager.Dispose();
+            _configSelectWindow?.Close();
         }
 
         private void CloseFile()

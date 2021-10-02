@@ -5,6 +5,7 @@
 #include "Stepperdriver.h"
 #include "LogarithmicStepDistribution.h"
 #include "Curves.h"
+#include "DebugTools.h"
 
 enum DriverInstructionResult
 {
@@ -12,7 +13,7 @@ enum DriverInstructionResult
 	Done,
 };
 
-class IDriverInstruction
+class IDriverInstruction : public ISizeable
 {
 protected:
 	
@@ -36,6 +37,7 @@ protected:
 	}
 public:
 	virtual DriverInstructionResult Execute(StepperDriver* driver) = 0;
+	virtual ~IDriverInstruction() {};
 };
 
 

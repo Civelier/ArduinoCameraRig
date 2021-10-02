@@ -8,8 +8,8 @@ using System.Windows;
 namespace CameraRigController.FieldGrid.Editor.ViewModel
 {
     [FieldGridEditor(typeof(int))]
-    [FieldgridTemplate("StringTemplate")]
-    public class SimpleIntEditorVM : EditorViewModelBase<SimpleIntEditorVM, int>
+    [FieldgridTemplate("SimpleIntTemplate")]
+    public class SimpleIntEditorVM : TextBoxEditorVM<SimpleIntEditorVM, int>
     {
     }
 }

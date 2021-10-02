@@ -47,6 +47,9 @@
     <Reference Include="GalaSoft.MvvmLight.Platform, Version=5.4.1.0, Culture=neutral, PublicKeyToken=5f873c45e98af8a1, processorArchitecture=MSIL">
       <HintPath>..\packages\MvvmLightLibs.5.4.1.1\lib\net45\GalaSoft.MvvmLight.Platform.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Windows.Forms" />
@@ -71,6 +74,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AppSettings.cs" />
+    <Compile Include="ConfigSelect.xaml.cs">
+      <DependentUpon>ConfigSelect.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FieldGrid\Editor\Any.cs" />
     <Compile Include="FieldGrid\Editor\FieldGridTemplateSelector.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\DoubleSliderEditorVM.cs" />
@@ -81,6 +88,7 @@
     <Compile Include="FieldGrid\Editor\ViewModel\SimpleIntEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\SliderNumberEditorVM.cs" />
     <Compile Include="FieldGrid\Editor\ViewModel\StringEditorVM.cs" />
+    <Compile Include="FieldGrid\Editor\ViewModel\TextBoxEditorVM.cs" />
     <Compile Include="FieldGrid\FieldGridControl.xaml.cs">
       <DependentUpon>FieldGridControl.xaml</DependentUpon>
     </Compile>
@@ -88,15 +96,24 @@
     <Compile Include="FieldGrid\FieldGridTemplateAttribute.cs" />
     <Compile Include="FieldGrid\FieldGridUtillities.cs" />
     <Compile Include="FieldGrid\FieldGridVM.cs" />
+    <Compile Include="FieldGrid\FocusExtension.cs" />
     <Compile Include="FieldGrid\ListSelector.cs" />
     <Compile Include="FieldGrid\SliderAttribute.cs" />
     <Compile Include="FieldGrid\UpDownBoxAttribute.cs" />
+    <Compile Include="INotifyPropertyChangingCancel.cs" />
+    <Compile Include="Model\ConfigModel.cs" />
     <Compile Include="Model\MotorTabModel.cs" />
+    <Compile Include="Preferences.cs" />
     <Compile Include="RawAnimChannel.cs" />
     <Compile Include="RawKeyframe.cs" />
+    <Compile Include="ViewModel\ConfigSelectVM.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\MotorTabVM.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
+    <Page Include="ConfigSelect.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="FieldGrid\FieldGridControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -139,6 +156,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include=".editorconfig" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -150,6 +168,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="View\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\..\Downloads\WpfBindingErrors-master\WpfBindingErrors-master\WpfBindingErrors\WpfBindingErrors.csproj">
+      <Project>{d0f69b57-250d-4e8b-bf19-325519d468e9}</Project>
+      <Name>WpfBindingErrors</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

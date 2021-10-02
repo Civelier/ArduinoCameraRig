@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CameraRigController"
         xmlns:fieldgrid="clr-namespace:CameraRigController.FieldGrid" x:Class="CameraRigController.MainWindow"
-        mc:Ignorable="d" Height="466" Width="793" DataContext="{Binding NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True, Source={StaticResource Locator}}" Title="{Binding Main.Title}">
+        mc:Ignorable="d" MinHeight="420" MinWidth="450" Height="466" Width="793" DataContext="{Binding NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True, Source={StaticResource Locator}}" Title="{Binding Main.Title}">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closed">
             <i:InvokeCommandAction Command="{Binding Main.CloseCommand}"/>
@@ -44,13 +44,14 @@
             </Grid.RenderTransform>
             <Grid.RowDefinitions>
                 <RowDefinition Height="106"/>
-                <RowDefinition/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="276"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Frame x:Name="ChannelFrame" Visibility="Hidden" Grid.ColumnSpan="2" Margin="0,38,0,80" Grid.Row="1"/>
+            <Frame x:Name="ChannelFrame" Visibility="Hidden" Grid.ColumnSpan="2" Margin="0,2,0,80" Grid.Row="2"/>
             <GroupBox Header="Animation file" Margin="10,10,7,0">
                 <Canvas Margin="0,0,-2,-4">
                     <Label x:Name="FileNameLabel" Content="{Binding Main.Filename, Mode=TwoWay}" Width="321"/>
@@ -58,7 +59,12 @@
                     <Label x:Name="FPSLabel" Content="{Binding Main.FPS, Mode=TwoWay}" Canvas.Top="52"/>
                 </Canvas>
             </GroupBox>
-            <TabControl x:Name="TabCTL" Margin="10,10,10,111" Grid.ColumnSpan="2" Grid.Row="1" ItemsSource="{Binding Main.Tabs.Tabs}">
+            <TabControl x:Name="TabCTL" Margin="10,2,10,83" Grid.ColumnSpan="2" Grid.Row="2" ItemsSource="{Binding Main.Tabs.Tabs}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="DataContextChanged">
+                        <i:InvokeCommandAction Command="{Binding Main.TabCTLDataContextChangedCommand}" CommandParameter="TabCTL"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
                 <TabControl.ItemTemplate>
                     <DataTemplate DataType="ViewModel:MotorTabVM">
                         <TextBlock Text="{Binding Data.MotorChannelName}"/>
@@ -70,6 +76,19 @@
                     </DataTemplate>
                 </TabControl.ContentTemplate>
             </TabControl>
+            <Grid Grid.Row="1" HorizontalAlignment="Stretch" Margin="15,0,10,0" Grid.ColumnSpan="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Config:" Grid.Column="0" VerticalAlignment="Stretch" HorizontalAlignment="Left"/>
+                <TextBlock DataContext="{Binding Main.Settings.CurrentConfig}" Text="{Binding Name}" HorizontalAlignment="Left" Grid.Column="2"/>
+                <Button Content="Select config" Command="{Binding Main.SelectConfigCommand}" Grid.Column="4" HorizontalAlignment="Right" Grid.Row="1" Width="87" Height="auto"/>
+            </Grid>
+
         </Grid>
     </Grid>
 </Window>

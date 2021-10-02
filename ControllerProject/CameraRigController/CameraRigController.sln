@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfPropertyGrid.Themes", ".
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControllerInterfaceTests", "ControllerInterfaceTests\ControllerInterfaceTests.csproj", "{131C9205-DC85-41C4-AAFD-B4DD5EBB17BE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfBindingErrors", "..\..\..\..\..\..\Downloads\WpfBindingErrors-master\WpfBindingErrors-master\WpfBindingErrors\WpfBindingErrors.csproj", "{D0F69B57-250D-4E8B-BF19-325519D468E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{131C9205-DC85-41C4-AAFD-B4DD5EBB17BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{131C9205-DC85-41C4-AAFD-B4DD5EBB17BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{131C9205-DC85-41C4-AAFD-B4DD5EBB17BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0F69B57-250D-4E8B-BF19-325519D468E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0F69B57-250D-4E8B-BF19-325519D468E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0F69B57-250D-4E8B-BF19-325519D468E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0F69B57-250D-4E8B-BF19-325519D468E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

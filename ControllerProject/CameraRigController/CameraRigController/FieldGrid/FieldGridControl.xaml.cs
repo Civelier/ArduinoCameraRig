@@ -17,6 +17,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using CameraRigController.FieldGrid;
+using GalaSoft.MvvmLight.CommandWpf;
+using System.ComponentModel;
 
 namespace CameraRigController.FieldGrid
 {
@@ -30,7 +32,7 @@ namespace CameraRigController.FieldGrid
     /// Interaction logic for FieldGridControl.xaml
     /// </summary>
     public partial class FieldGridControl : UserControl
-    {
+    {   
         public ObservableCollection<EditorViewModelBase> Fields
         {
             get { return (ObservableCollection<EditorViewModelBase>)GetValue(FieldsProperty); }
@@ -45,7 +47,6 @@ namespace CameraRigController.FieldGrid
                 new PropertyMetadata(new ObservableCollection<EditorViewModelBase>(), FieldsChangedCallback));
 
 
-
         public object Target
         {
             get { return (object)GetValue(TargetProperty); }
@@ -56,12 +57,46 @@ namespace CameraRigController.FieldGrid
         public static readonly DependencyProperty TargetProperty =
             DependencyProperty.Register("Target", typeof(object), typeof(FieldGridControl), new PropertyMetadata(null));
 
-
+        
 
         public FieldGridControl()
         {
             Resources["FieldTemplateSelector"] = new FieldGridTemplateSelector(this);
             InitializeComponent();
+            PropertyListBox.SelectionChanged += PropertyListBox_SelectionChanged;
+            PropertyListBox.SelectionMode = SelectionMode.Single;
+            
+            //foreach (var item in PropertyListBox.Items)
+            //{
+            //    var ed = (EditorViewModelBase)item;
+            //    ed.PropertyChanged += (sender, e) =>
+            //    {
+            //        if (e.PropertyName == nameof(ed.IsSelected))
+            //        {
+            //            if (ed.IsSelected)
+            //            {
+            //                PropertyListBox.SelectedItem = item;
+            //            }
+            //        }
+            //    };
+            //}
+
+        }
+
+        private void PropertyListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var oldEditors = (IList<object>)e.RemovedItems;
+            if (oldEditors.Count > 0)
+            {
+                var ed = (EditorViewModelBase)oldEditors[0];
+                ed?.OnUnselected();
+            }
+            var newEditors = (IList<object>)e.AddedItems;
+            if (newEditors.Count > 0)
+            {
+                var ed = (EditorViewModelBase)newEditors[0];
+                ed?.OnSelected();
+            }
         }
 
         protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
@@ -69,6 +104,7 @@ namespace CameraRigController.FieldGrid
             base.OnPropertyChanged(e);
             if (e.Property == TargetProperty)
             {
+                if (Target == null) return;
                 Fields = FieldGridUtillities.ToVMCollection(Target);
             }
         }
@@ -81,5 +117,24 @@ namespace CameraRigController.FieldGrid
                 fg.PropertyListBox.ItemsSource = fg.Fields;
             }
         }
+
+        private void ListBoxItemControl_GotFocus(object sender, RoutedEventArgs e)
+        {
+            var box = (TextBox)sender;
+            var editor = (EditorViewModelBase)box.DataContext;
+            editor.IsSelected = true;
+        }
+
+        private void ListBoxItemControl_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var box = (TextBox)sender;
+            var editor = (EditorViewModelBase)box.DataContext;
+            editor.IsSelected = false;
+        }
+
+        private void PropertyListBox_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            
+        }           
     }
 }

@@ -28,6 +28,8 @@ private:
 public:
     KeyframeDriverInstruction(TimeSync* sync, Keyframe start, Keyframe end, curve_t curve);
     DriverInstructionResult Execute(StepperDriver* driver) override;
+    size_t Size() const override;
+    virtual ~KeyframeDriverInstruction();
 };
 
 #endif // !_KeyframeInstruction_h

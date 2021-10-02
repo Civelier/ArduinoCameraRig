@@ -9,6 +9,7 @@
 
 #include "MultiStepperUtillities.h"
 #include "LogarithmicStepDistribution.h"
+#include "DebugTools.h"
 
 class IDriverInstruction;
 
@@ -58,7 +59,6 @@ struct StepperDriver
 
 	void SetInstruction(IDriverInstruction* instruction)
 	{
-		if (Instruction != nullptr) delete(Instruction);
 		Instruction = instruction;
 	}
 	

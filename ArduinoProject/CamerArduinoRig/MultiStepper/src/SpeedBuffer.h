@@ -7,6 +7,8 @@
 #include "WProgram.h"
 #endif
 
+#include "DebugTools.h"
+
 struct SpeedBuffer
 {
 	size_t Count = 0;
@@ -16,7 +18,7 @@ struct SpeedBuffer
 	SpeedBuffer(size_t size)
 	{
 		Size = size;
-		Deltas = (uint32_t*)malloc(size * sizeof(uint32_t));
+		Deltas = DeclareNewArr(uint32_t, size);
 	}
 
 	void Write(uint32_t delta)
@@ -40,7 +42,7 @@ struct SpeedBuffer
 
 	~SpeedBuffer()
 	{
-		free(Deltas);
+		DeclareDeleteArr(uint32_t, Size) Deltas;
 	}
 };
 

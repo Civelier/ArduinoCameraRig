@@ -7,7 +7,6 @@
 #include "WProgram.h"
 #endif
 
-
 struct Keyframe
 {
 	uint16_t ChannelID;
@@ -15,13 +14,19 @@ struct Keyframe
 	int32_t Steps;
 	void Print()
 	{
-		Serial.println(4);
+		//Serial.println(4);
 		Serial.print("ID: ");
 		Serial.print(ChannelID);
 		Serial.print(" MS: ");
 		Serial.print(MS);
 		Serial.print(" Steps: ");
 		Serial.println(Steps);
+	}
+	~Keyframe()
+	{
+		ChannelID = 0xFFFF;
+		MS = 0xFFFFFFFF;
+		Steps = 0xFFFFFFFF;
 	}
 };
 
