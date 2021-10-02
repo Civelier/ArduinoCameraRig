@@ -294,8 +294,9 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 		USB.print(channelID);
 		USB.println("' is done!");
 		USB.flush();*/
-		
-	} else if (buffer->Available() && result == DriverInstructionResult::Done)
+
+	}
+	else if (buffer->Available() && result == DriverInstructionResult::Done)
 	{
 		DebugToolsStep("New instruction");
 		/*DebugStep();
@@ -338,7 +339,7 @@ void InstructionCallback(uint16_t channelID, DriverInstructionResult result)
 	sync->Stop();
 	//Motor1->SetInstruction(nullptr);
 	return;
-}
+};
 
 void ReadSerial()
 {
