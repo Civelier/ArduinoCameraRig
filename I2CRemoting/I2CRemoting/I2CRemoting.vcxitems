@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{8ba71dbf-54cd-43df-ae14-162458e46269}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="$(MSBuildThisFileDirectory)readme.txt" />
+    <Text Include="$(MSBuildThisFileDirectory)library.properties" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\CMDStream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\CommandRegister.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\I2CRemoting.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\IRemotingCommand.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\IWireHost.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\RemotingUtillities.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\CMDStream.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\CommandRegister.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\I2CRemoting.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\IRemotingCommand.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\RemotingUtillities.cpp" />
+  </ItemGroup>
+</Project>

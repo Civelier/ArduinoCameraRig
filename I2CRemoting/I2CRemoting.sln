@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "I2CRemoting", "I2CRemoting\I2CRemoting.vcxitems", "{8BA71DBF-54CD-43DF-AE14-162458E46269}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Master", "Master\Master.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CmdSetup", "CmdSetup\CmdSetup.vcxitems", "{DEB897CA-E73D-4F3B-84F5-83E3819E6C5C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{1784B3D8-2988-43A0-B278-14D5CD071FE8}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		CmdSetup\CmdSetup.vcxitems*{1784b3d8-2988-43a0-b278-14d5cd071fe8}*SharedItemsImports = 4
+		I2CRemoting\I2CRemoting.vcxitems*{1784b3d8-2988-43a0-b278-14d5cd071fe8}*SharedItemsImports = 4
+		I2CRemoting\I2CRemoting.vcxitems*{8ba71dbf-54cd-43df-ae14-162458e46269}*SharedItemsImports = 9
+		CmdSetup\CmdSetup.vcxitems*{c5f80730-f44f-4478-bdae-6634efc2ca88}*SharedItemsImports = 4
+		I2CRemoting\I2CRemoting.vcxitems*{c5f80730-f44f-4478-bdae-6634efc2ca88}*SharedItemsImports = 4
+		CmdSetup\CmdSetup.vcxitems*{deb897ca-e73d-4f3b-84f5-83e3819e6c5c}*SharedItemsImports = 9
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.Build.0 = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{1784B3D8-2988-43A0-B278-14D5CD071FE8}.Debug|x86.ActiveCfg = Debug|Win32
+		{1784B3D8-2988-43A0-B278-14D5CD071FE8}.Debug|x86.Build.0 = Debug|Win32
+		{1784B3D8-2988-43A0-B278-14D5CD071FE8}.Release|x86.ActiveCfg = Release|Win32
+		{1784B3D8-2988-43A0-B278-14D5CD071FE8}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {842AEA3F-8821-43BF-931F-B47BCB2F5D47}
+	EndGlobalSection
+EndGlobal

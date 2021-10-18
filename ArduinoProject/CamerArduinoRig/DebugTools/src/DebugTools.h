@@ -16,15 +16,28 @@
 
 //#include <stack>
 //#include <array>
-#include <vector>
+#ifndef ARDUINO_ARCH_MEGAAVR
 #include "malloc.h"
-
+#endif
 //#include <wdt.h>
 #define DEBUG_TOOLS_FILE_NAME_LENGTH 32
 #define DEBUG_TOOLS_STEP_NAME_LENGTH 32
 #define DEBUG_TOOLS_FUNC_NAME_LENGTH 32
-#define DEBUG_TOOLS_STACK_LENGTH 12
+#define DEBUG_TOOLS_STACK_LENGTH 15
 #define WDT_KEY (0xA5)
+
+enum Timeout {
+	TIMEOUT_15MS = 15,
+	TIMEOUT_30MS = 30,
+	TIMEOUT_60MS = 60,
+	TIMEOUT_120MS = 120,
+	TIMEOUT_250MS = 250,
+	TIMEOUT_500MS = 500,
+	TIMEOUT_1S = 1000,
+	TIMEOUT_2S = 2000,
+	TIMEOUT_4S = 4000,
+	TIMEOUT_8S = 8000
+};
 	
 //Call often to reset the watchdog and indicate a new step.
 //stepName must be less than 32 characters.
@@ -82,6 +95,9 @@ struct DebugInfo
 	uint16_t Line;
 	uint16_t Count;
 	int MemLeft;
+#ifdef ARDUINO_ARCH_MEGAAVR
+	bool DisplayOnNextRun;
+#endif
 
 	char FileName[DEBUG_TOOLS_FILE_NAME_LENGTH];
 	char StepName[DEBUG_TOOLS_STEP_NAME_LENGTH];
@@ -92,11 +108,85 @@ struct DebugInfo
 
 extern const size_t MaxMem;	
 
+template <typename T>
+class Stack
+{
+private:
+	T* m_arr;
+	size_t m_count;
+	size_t m_capacity;
+public:
+	Stack(size_t maxLength);
+	void push_back(const T& item);
+	void pop_back();
+	T& back();
+	T& operator[](size_t index);
+	size_t size();
+	T* begin();
+	T* end();
+	~Stack();
+};
+
+template<typename T>
+inline Stack<T>::Stack(size_t maxLength)
+{
+	m_arr = new T[maxLength];
+}
+
+template<typename T>
+inline void Stack<T>::push_back(const T& item)
+{
+	m_arr[m_count] = item;
+	m_count++;
+}
+
+template<typename T>
+inline void Stack<T>::pop_back()
+{
+	--m_count;
+}
+
+template<typename T>
+inline T& Stack<T>::back()
+{
+	return m_arr[m_count];
+}
+
+template<typename T>
+inline T& Stack<T>::operator[](size_t index)
+{
+	return m_arr[index];
+}
+
+template<typename T>
+inline size_t Stack<T>::size()
+{
+	return m_count;
+}
+
+template<typename T>
+inline T* Stack<T>::begin()
+{
+	return m_arr;
+}
+
+template<typename T>
+inline T* Stack<T>::end()
+{
+	return m_arr + m_count + 1;
+}
+
+template<typename T>
+inline Stack<T>::~Stack()
+{
+	delete[] m_arr;
+}
+
 class DebugToolsClass
 {
 private:
 	//using Alloc_t = std::array<DebugInfo, DEBUG_TOOLS_STACK_LENGTH>;
-	using Stack_t = std::vector<DebugInfo>;
+	using Stack_t = Stack<DebugInfo>;
 
 	Stream* m_debugStream{&Serial};
 	DebugInfo* m_debugInfo;
@@ -150,5 +240,7 @@ struct TraceObject
 	}
 };
 
-#endif
 
+
+
+#endif

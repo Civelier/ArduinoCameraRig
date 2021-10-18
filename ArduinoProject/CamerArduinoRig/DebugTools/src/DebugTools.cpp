@@ -6,7 +6,95 @@
 */
 
 #include "DebugTools.h"
+
+#ifdef ARDUINO_ARCH_MEGAAVR
+#include "avr/wdt.h"
+#include "cstring"
+
+
+#if !defined(WDTO_4S)
+
+#define WDTO_4S WDTO_1S
+
+#endif
+
+#if !defined(WDTO_8S)
+
+#define WDTO_8S WDTO_1S
+
+#endif
+
+void watchdogEnable(int ms)
+{
+    uint8_t wdt_timeout = 0;
+
+    switch (ms)
+    {
+        case 15:
+        {
+            wdt_timeout = WDTO_15MS;
+            break;
+        }
+        case 30:
+        {
+            wdt_timeout = WDTO_30MS;
+            break;
+        }
+        case 60:
+        {
+            wdt_timeout = WDTO_60MS;
+            break;
+        }
+        case 120:
+        {
+            wdt_timeout = WDTO_120MS;
+            break;
+        }
+        case 250:
+        {
+            wdt_timeout = WDTO_250MS;
+            break;
+        }
+        case 500:
+        {
+            wdt_timeout = WDTO_500MS;
+            break;
+        }
+        case 1000:
+        {
+            wdt_timeout = WDTO_1S;
+            break;
+        }
+        case 2000:
+        {
+            wdt_timeout = WDTO_2S;
+            break;
+        }
+        case 4000:
+        {
+            wdt_timeout = WDTO_4S;
+            break;
+        }
+        case 8000:
+        {
+            wdt_timeout = WDTO_8S;
+            break;
+        }
+    }
+
+    wdt_enable(wdt_timeout);
+}
+
+void watchdogReset()
+{
+    wdt_reset();
+}
+
+#endif
+#ifdef ARDUINO_ARCH_SAM
 #include "watchdog.h"
+#endif
+
 
 void watchdogSetup(void) {/*** watchdogDisable (); ***/ }
 
@@ -136,7 +224,10 @@ void DebugToolsClass::SetupWatchdog(uint32_t ms)
 {
     watchdogEnable(ms);
     //m_array = new Alloc_t(DEBUG_TOOLS_STACK_LENGTH, {});
-    m_callStack = new Stack_t(1);
+    m_callStack = new Stack_t(DEBUG_TOOLS_STACK_LENGTH);
+#ifdef ARDUINO_ARCH_MEGAAVR
+    m_debugInfo->DisplayOnNextRun = true;
+#endif
 }
 
 void DebugToolsClass::ResetWatchdog(uint16_t line, const char* fileName, const char* funcName, const char* stepName)
@@ -168,8 +259,12 @@ void DebugToolsClass::ResetWatchdog(uint16_t line, const char* fileName, const c
 
 bool DebugToolsClass::WasLastResetFromWatchdog()
 {
+#ifdef ARDUINO_ARCH_SAM
     uint32_t status = (RSTC->RSTC_SR & RSTC_SR_RSTTYP_Msk) >> 8;
     return status == 0b010;
+#else
+    return m_debugInfo->DisplayOnNextRun;
+#endif
 }
 
 static void PrintIndent(Print& print, int indent)
@@ -180,8 +275,9 @@ static void PrintIndent(Print& print, int indent)
     }
 }
 
-static void PrintTrace(Print& print, std::vector<DebugInfo>::iterator it, int indent, int count)
+static void PrintTrace(Print& print, DebugInfo* it, int indent, int count)
 {
+    if (count > DEBUG_TOOLS_STACK_LENGTH) count = DEBUG_TOOLS_STACK_LENGTH;
     auto v = *it;
     if (indent < count - 1)
     {
@@ -204,17 +300,29 @@ static void PrintTrace(Print& print, std::vector<DebugInfo>::iterator it, int in
 
 void DebugToolsClass::PrintStack()
 {
+#ifdef ARDUINO_ARCH_MEGAAVR
+    m_debugInfo->DisplayOnNextRun = false;
+#endif
     PrintTrace(*m_debugStream, m_callStack->begin(), 0, m_callStack->size());
     m_debugStream->println();
     m_debugStream->flush();
+#ifdef ARDUINO_ARCH_MEGAAVR
+    m_debugInfo->DisplayOnNextRun = true;
+#endif
 }
 
 
 void DebugToolsClass::PrintDebugInfo(DebugInfoDisplayFlags displayFlags)
 {
+#ifdef ARDUINO_ARCH_MEGAAVR
+    m_debugInfo->DisplayOnNextRun = false;
+#endif
     m_debugInfo->Display(*m_debugStream, displayFlags);
     m_debugStream->println();
     m_debugStream->flush();
+#ifdef ARDUINO_ARCH_MEGAAVR
+    m_debugInfo->DisplayOnNextRun = true;
+#endif
 }
 
 void DebugInfo::Display(Print& print, DebugInfoDisplayFlags displayFlags)
